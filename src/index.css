@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*, *::before, *::after { box-sizing: border-box; }
+body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #b6d6c8; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3D8B6E; }
+
+[contenteditable]:focus { outline: 1px solid #3D8B6E; border-radius: 3px; }
+
+/* ── PRINT STYLES ────────────────────────── */
+@media print {
+  /* Hide all UI chrome */
+  .no-print, header, nav, .action-bar, .fab-btn, button:not(.print-keep) { display: none !important; }
+
+  body { background: white !important; margin: 0; padding: 0; }
+  .print-area { display: block !important; }
+
+  /* A4 — default */
+  @page { size: A4 portrait; margin: 15mm 15mm 15mm 15mm; }
+  .page-a3 { } /* overridden below */
+}
+
+/* A3 page size override — applied via JS body class */
+body.print-a3 { }
+@page :A3 { size: A3 portrait; margin: 12mm; }
+
+/* Print preview overlay */
+.print-preview-page {
+  
+  width: 210mm;
+  min-height: 297mm;
+  background: white;
+  padding: 15mm;
+  margin: 0 auto;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  font-family: 'DM Sans', sans-serif;
+  color: #1A2E24;
+}
+.print-preview-page.a3-page {
+  width: 297mm;
+  min-height: 420mm;
+}
+
+/* Print table styles */
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  margin-top: 8px;
+}
+.print-table th {
+  background: #3D8B6E;
+  color: white;
+  padding: 6px 8px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.print-table th.fill-col { background: #1e5c42; }
+.print-table td {
+  border: 1px solid #d1d5db;
+  padding: 5px 8px;
+  font-size: 10px;
+  vertical-align: middle;
+}
+.print-table tr:nth-child(even) td { background: #f9fafb; }
+.print-table tr:nth-child(odd) td { background: white; }
