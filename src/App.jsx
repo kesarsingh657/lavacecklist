@@ -56,6 +56,55 @@ function fmtDT(iso)    { if(!iso)return"—"; return new Date(iso).toLocaleStrin
 const getLS = (k,def)=>{ try{ return JSON.parse(localStorage.getItem(k))??def; }catch{ return def; } };
 const setLS = (k,v)   => localStorage.setItem(k, JSON.stringify(v));
 
+function getCompletion(rows) {
+  let total = 0;
+  let filled = 0;
+
+  rows.forEach(row => {
+    row.forEach(cell => {
+      total++;
+
+      if (
+        cell.value !== "" &&
+        cell.value !== null &&
+        cell.value !== undefined
+      ) {
+        filled++;
+      }
+    });
+  });
+
+  return total > 0
+    ? Math.round((filled / total) * 100)
+    : 0;
+}
+
+function validateFillColumns(tableData) {
+  const missing = [];
+
+  tableData.rows.forEach((row, rowIndex) => {
+    row.forEach((cell, colIndex) => {
+
+      const header = tableData.headers[colIndex];
+
+      if (
+        header?.isFill &&
+        (
+          cell.value === "" ||
+          cell.value === null ||
+          cell.value === undefined
+        )
+      ) {
+        missing.push(
+          `Row ${rowIndex + 1} - ${header.text}`
+        );
+      }
+
+    });
+  });
+
+  return missing;
+}
 // ── Permission gates (backend-style validation) ──
 const PERM = {
   canEdit:           (cl,u) => !["finalized","submitted","pending","approved","cancelled"].includes(cl.status) && (u.role==="admin"||u.role==="operator"),
@@ -348,6 +397,38 @@ function PaperSizeModal({ action, cl, auditLog, onClose }) {
 // ═══════════════════════════════════════════════════════
 //  STATUS PILL / FREQ PILL
 // ═══════════════════════════════════════════════════════
+function WorkflowStepper({ status }) {
+  const steps = [
+    "Draft",
+    "Finalized",
+    "Submitted",
+    "Approved"
+  ];
+
+  const current =
+    status === "draft" ? 0 :
+    status === "finalized" ? 1 :
+    status === "submitted" || status === "pending" ? 2 :
+    status === "approved" ? 3 : 0;
+
+  return (
+    <div className="flex items-center gap-2 mb-4 flex-wrap">
+      {steps.map((s, i) => (
+        <div
+          key={s}
+          className={`px-3 py-1 rounded-full text-xs font-bold
+          ${
+            i <= current
+              ? "bg-green-500 text-white"
+              : "bg-gray-200 text-gray-500"
+          }`}
+        >
+          {s}
+        </div>
+      ))}
+    </div>
+  );
+}
 function StatusPill({ status }) {
   return (
     <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide border ${STATUS_CLS[status]||STATUS_CLS.draft}`}>
@@ -454,6 +535,27 @@ function LoginPage({ onLogin }) {
     if(u&&u.password===pw){onLogin({id:id.trim(),role:u.role,name:u.name});}
     else{setError("Invalid credentials. Try admin / admin123");setTimeout(()=>setError(""),3000);}
   }
+
+  function handleBackToDraft() {
+
+  if (!window.confirm("Move checklist back to Draft?"))
+    return;
+
+  setCl(prev => ({
+    ...prev,
+    status: STATUS.DRAFT
+  }));
+
+  setChecklists(prev =>
+    prev.map(x =>
+      x.id === cl.id
+        ? { ...x, status: STATUS.DRAFT }
+        : x
+    )
+  );
+
+  showToast("Moved back to Draft");
+}
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-10" style={{background:"linear-gradient(135deg,#e8f5ee 0%,#f0f7f3 50%,#dceee5 100%)"}}>
       <div className="w-full max-w-md rounded-3xl p-8 relative z-10" style={{background:"rgba(255,255,255,0.92)",backdropFilter:"blur(20px)",border:"1px solid rgba(111,175,143,0.2)",boxShadow:"0 20px 60px rgba(61,139,110,0.12)"}}>
@@ -797,10 +899,9 @@ function AuditPage({ auditLog, checklists, user }) {
   return (
     <main className="max-w-7xl mx-auto px-4 py-5">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <div>
-          <h2 className="text-lg font-bold text-[#1A2E24]">Audit Log</h2>
-          <p className="text-xs text-[#6B8A78] font-mono">{visible.length} event{visible.length!==1?"s":""} · tamper-proof immutable record</p>
-        </div>
+        <h2 className="text-lg font-bold text-[#1A2E24]">
+  Manufacturing Checklist Dashboard
+</h2>
         <div className="flex gap-2 flex-wrap">
           <select value={actionFilter} onChange={e=>setActionFilter(e.target.value)} className="text-xs px-2 py-1.5 rounded-lg border border-gray-200 outline-none bg-white">
             <option value="">All Actions</option>{actions.map(a=><option key={a}>{a}</option>)}
@@ -1106,7 +1207,7 @@ function FillField({ type, opts, value, onChange, disabled }) {
   const cls="w-full text-[11px] bg-transparent border-none outline-none";
   switch(type){
     case "Number Input": return <input type="number" value={value||""} disabled={disabled} onChange={e=>onChange(e.target.value)} placeholder="0" className={cls}/>;
-    case "Checkbox":     return <div className="flex items-center justify-center"><input type="checkbox" checked={!!value} disabled={disabled} onChange={e=>onChange(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-[#3D8B6E]"/></div>;
+    case "Checkbox":     return <div className="fle items-center justify-center"><input type="checkbox" checked={!!value} disabled={disabled} onChange={e=>onChange(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-[#3D8B6E]"/></div>;
     case "OK / NG": case "Pass / Fail": case "Yes / No": {
       const options=type==="OK / NG"?["OK","NG"]:type==="Pass / Fail"?["Pass","Fail"]:["Yes","No"];
       return <select value={value||""} disabled={disabled} onChange={e=>onChange(e.target.value)} className={cls+" cursor-pointer"}><option value="">—</option>{options.map(o=><option key={o}>{o}</option>)}</select>;
@@ -1119,12 +1220,52 @@ function FillField({ type, opts, value, onChange, disabled }) {
 // ═══════════════════════════════════════════════════════
 //  CHECKLIST EDITOR
 // ═══════════════════════════════════════════════════════
-function ChecklistEditor({ cl:initialCl, viewMode, user, auditLog, onSaveClose, onBack, showToast, addNotif, addAudit, bookmarks, setBookmarks, setChecklists }) {
+function ChecklistEditor({
+  cl:initialCl,
+  viewMode,
+  user,
+  auditLog,
+  onSaveClose,
+  onBack,
+  showToast,
+  addNotif,
+  addAudit,
+  bookmarks,
+  setBookmarks,
+  setChecklists,
+  onEditDetails
+}) {
+
   const [cl,setCl]=useState(()=>{
     const c={...initialCl};
-    if(!c.tableData){const rows=c.rows||5,cols=c.cols||4;c.tableData={headers:Array.from({length:cols},(_,i)=>({text:`Checkpoint ${i+1}`,isFill:false})),rows:Array.from({length:rows},()=>Array.from({length:cols},()=>({value:""})))};}
+    if(!c.tableData){
+      const rows=c.rows||5,
+            cols=c.cols||4;
+
+      c.tableData={
+        headers:Array.from(
+          {length:cols},
+          (_,i)=>({
+            text:`Checkpoint ${i+1}`,
+            isFill:false
+          })
+        ),
+        rows:Array.from(
+          {length:rows},
+          ()=>Array.from(
+            {length:cols},
+            ()=>({value:""})
+          )
+        )
+      };
+    }
+
     return c;
   });
+
+  const completion = getCompletion(
+  cl.tableData?.rows || []
+);
   const [showSubmitModal,setShowSubmitModal]=useState(false);
   const [showCalModal,setShowCalModal]=useState(false);
   const [calViewDate,setCalViewDate]=useState(new Date());
@@ -1132,6 +1273,7 @@ function ChecklistEditor({ cl:initialCl, viewMode, user, auditLog, onSaveClose, 
   const [approvalModal,setApprovalModal]=useState(null);
   const [paperModal,setPaperModal]=useState(null);
   const [showCloneModal,setShowCloneModal]=useState(false); // clone from inside editor
+  
 
   const isView     = viewMode;
   const isRecurring= ["Daily","Weekly","Monthly"].includes(cl.frequency);
@@ -1141,6 +1283,26 @@ function ChecklistEditor({ cl:initialCl, viewMode, user, auditLog, onSaveClose, 
   const canCancel  = !isView && PERM.canCancelSubmit(cl,user);
   const canAR      = !isView && PERM.canApproveReject(cl,user);
   const showLocked = ["finalized","submitted","pending","approved","rejected","cancelled"].includes(cl.status) && !editable && !isView;
+  
+
+  
+function handleBackToDraft() {
+
+  if (!window.confirm("Move checklist back to Draft?")) {
+    return;
+  }
+
+  const updated = {
+    ...cl,
+    status: "draft"
+  };
+
+  setCl(updated);
+  persist(updated);
+
+  showToast("Checklist moved back to Draft");
+}
+
 
   function persist(updated){
     setChecklists(prev=>{const idx=prev.findIndex(l=>l.id===updated.id);if(idx>=0){const n=[...prev];n[idx]=updated;return n;}return [...prev,updated];});
@@ -1254,11 +1416,31 @@ function ChecklistEditor({ cl:initialCl, viewMode, user, auditLog, onSaveClose, 
 
   return (
     <main className="max-w-[1800px] mx-auto p-3 md:p-4">
+      <WorkflowStepper status={cl.status} />
+
+<div className="mb-4 bg-white p-3 rounded-xl border border-gray-200">
+  <div className="flex justify-between text-xs mb-1">
+    <span className="font-semibold">Completion</span>
+    <span>{completion}%</span>
+  </div>
+
+  <div className="h-2 bg-gray-200 rounded">
+    <div
+      className="h-2 bg-green-500 rounded"
+      style={{ width: `${completion}%` }}
+    />
+  </div>
+</div>
       <div className="action-bar flex flex-wrap items-center gap-2 mb-3 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm">
         {/* Back */}
         <button onClick={onBack} className="text-[10px] px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 font-semibold flex items-center gap-1.5">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Back
         </button>
+
+       
+        
+
+      
 
         {editable&&<>
           <button onClick={addRow} className="text-[10px] px-2.5 py-1.5 rounded-lg bg-[#e8f5ee] text-[#3D8B6E] hover:bg-[#3D8B6E] hover:text-white font-semibold transition-all">+ Row</button>
@@ -1307,9 +1489,44 @@ function ChecklistEditor({ cl:initialCl, viewMode, user, auditLog, onSaveClose, 
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Finalize
           </button>}
           {/* Submit */}
-          {canSub&&<button onClick={()=>setShowSubmitModal(true)} className="text-[10px] px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-1">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Submit for Approval
-          </button>}
+          {canSub&&<button
+  onClick={() => {
+
+    const missing =
+      validateFillColumns(cl.tableData);
+
+    if (missing.length > 0) {
+
+      alert(
+        "⚠ Please fill all required values before submitting.\n\n" +
+        missing.join("\n")
+      );
+
+      return;
+    }
+
+    setShowSubmitModal(true);
+
+  }}
+
+  className="text-[10px] px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-1"
+>
+  <svg
+    width="11"
+    height="11"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <line x1="22" y1="2" x2="11" y2="13"/>
+    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+  </svg>
+
+  Submit for Approval
+</button>}
           {/* Cancel submission */}
           {canCancel&&<button onClick={handleCancelSubmission} className="text-[10px] px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold flex items-center gap-1">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Cancel Submission
@@ -1352,6 +1569,15 @@ function ChecklistEditor({ cl:initialCl, viewMode, user, auditLog, onSaveClose, 
             <span className="font-bold">🔒 Finalized</span> on {fmtDT(cl.finalizedAt)} · All fields are locked. Click <b>Submit for Approval</b> to proceed.
           </div>
         )}
+        {cl.status === STATUS.FINALIZED && (
+  <button
+    onClick={handleBackToDraft}
+    className="text-[10px] px-3 py-1.5 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-bold flex items-center gap-1"
+  >
+    ↩ Back to Draft
+  </button>
+)}
+        
         {(cl.status===STATUS.SUBMITTED||cl.status===STATUS.PENDING)&&(
           <div className="bg-blue-50 border-b border-blue-200 px-4 py-2.5 text-xs text-blue-800">
             <div className="flex items-center justify-between flex-wrap gap-1">
@@ -1589,6 +1815,26 @@ function CreateModal({ user, onClose, onCreate, prefill }) {
       },
       dateEntries: {},
     };
+
+    if (!form.name.trim()) {
+  alert("Checklist Name is required");
+  return;
+}
+
+if (form.name.trim().length < 3) {
+  alert("Checklist Name must be at least 3 characters");
+  return;
+}
+
+if (rows < 1) {
+  alert("Rows must be greater than 0");
+  return;
+}
+
+if (cols < 1) {
+  alert("Checkpoints must be greater than 0");
+  return;
+}
     onCreate(cl);
   }
 
@@ -1838,6 +2084,9 @@ function ChecklistPage({ user, checklists, bookmarks, setChecklists, setBookmark
   const [cloneTarget,setCloneTarget]=useState(null);
   const [tab,setTab]             = useState("all");
   const [showFilters,setShowFilters]=useState(false); // toggle filter panel
+  const completion = activeCl
+  ? getCompletion(activeCl.tableData?.rows || [])
+  : 0;
 
   // ── Filter state ──
   const [search,    setSearch]    = useState("");
@@ -1911,20 +2160,38 @@ function ChecklistPage({ user, checklists, bookmarks, setChecklists, setBookmark
   }
 
   if(view==="editor"&&activeCl){
-    return <ChecklistEditor cl={activeCl} viewMode={isViewMode} user={user} auditLog={auditLog}
-      onSaveClose={()=>setView("landing")} onBack={()=>setView("landing")}
-      showToast={showToast} addNotif={addNotif} addAudit={addAudit}
-      bookmarks={bookmarks} setBookmarks={setBookmarks} setChecklists={setChecklists}/>;
-  }
+  return <ChecklistEditor
+    cl={activeCl}
+    viewMode={isViewMode}
+    user={user}
+    auditLog={auditLog}
+    onSaveClose={()=>setView("landing")}
+    onBack={()=>setView("landing")}
+    showToast={showToast}
+    addNotif={addNotif}
+    addAudit={addAudit}
+    bookmarks={bookmarks}
+    setBookmarks={setBookmarks}
+    setChecklists={setChecklists}
+
+    onEditDetails={(cl)=>{
+      setPrefill(cl);
+      setShowCreate(true);
+      setView("landing");
+    }}
+  />;
+}
 
   return (
     <main className="max-w-[1800px] mx-auto p-3 md:p-4">
       {/* Page header */}
+     
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-base font-bold text-[#1A2E24]">Checklists
           <span className="ml-2 text-[10px] text-[#6B8A78] font-normal font-mono">{filtered.length} records</span>
         </h2>
       </div>
+      
 
       {/* Tab + search + filter toggle bar */}
       <div className="flex flex-wrap gap-1.5 mb-2 items-center">
@@ -2104,6 +2371,7 @@ function ChecklistPage({ user, checklists, bookmarks, setChecklists, setBookmark
             addNotif({msg:`📝 "${cl.name}" created by ${user.name}`,time:now(),read:false});
             setShowCreate(false);showToast("Checklist created!");
             setActiveCl(cl);setIsViewMode(false);setView("editor");
+            
           }}/>
       )}
       {/* Clone Modal — appears when user clicks clone on a checklist row */}
