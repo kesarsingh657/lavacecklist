@@ -392,7 +392,7 @@ function Header({ user, page, setPage, notifications, onClearNotifs, onMarkAllRe
             <div className="w-8 h-8 rounded-lg bg-white text-[#3D8B6E] flex items-center justify-center font-bold text-sm">✓</div>
             <div className="hidden sm:block">
               <h1 className="text-sm font-bold text-white leading-none">Smart Checklist</h1>
-              <p className="text-[9px] text-green-200 font-mono">Manufacturing System v4.0</p>
+              <p className="text-[9px] text-green-200 font-mono">Manufacturing System</p>
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-1">
@@ -650,7 +650,7 @@ function SubmitApprovalModal({ cl, onConfirm, onClose }) {
               rows={4}
               value={message}
               onChange={e => setMessage(e.target.value)}
-              placeholder="Add context, observations, or any notes for the approver…&#10;e.g. Line 2 morning shift — all readings within spec. Please review fill columns 3–5."
+              placeholder=""
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs resize-none outline-none focus:border-[#3D8B6E] focus:ring-2 focus:ring-[#3D8B6E]/10 leading-relaxed"
             />
             <p className="text-[10px] text-[#9ca3af] mt-1">{message.length} characters</p>
@@ -1186,7 +1186,7 @@ function ChecklistEditor({ cl:initialCl, viewMode, user, auditLog, onSaveClose, 
     persist(updated);setCl(updated);
     addAudit(cl.id,"Finalized",user,"All fields locked. Ready for submission.",cl.name);
     addNotif({msg:`🔒 "${cl.name}" finalized by ${user.name}`,time:ts,read:false});
-    showToast("🔒 Checklist finalized! Fields are now locked.");
+    showToast(" Checklist finalized! Fields are now locked.");
   }
 
   function handleSubmitConfirm(remarksOrObj){
