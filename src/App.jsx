@@ -941,7 +941,9 @@ function AuditPage({ auditLog, checklists, user }) {
 //  DASHBOARD PAGE
 // ═══════════════════════════════════════════════════════
 function DashboardPage({ user, checklists, bookmarks, setChecklists, setBookmarks, addNotif, addAudit, showToast, setPage, setChecklistAction }) {
-  const [tab,setTab]=useState("all"); const [search,setSearch]=useState(""); const [dept,setDept]=useState(""); const [pageNum,setPageNum]=useState(0);
+  const [tab,setTab]=useState("all");
+  const [deptTab,setDeptTab]=useState("all");
+  const [search,setSearch]=useState(""); const [dept,setDept]=useState(""); const [pageNum,setPageNum]=useState(0);
   const [approvalModal,setApprovalModal]=useState(null);
   const [paperModal,setPaperModal]=useState(null);
   const PAGE=10;
@@ -962,6 +964,11 @@ function DashboardPage({ user, checklists, bookmarks, setChecklists, setBookmark
   if(tab==="bookmarked")filtered=filtered.filter(l=>bIds.includes(l.id));
   if(search){const q=search.toLowerCase();filtered=filtered.filter(l=>l.name?.toLowerCase().includes(q)||l.id?.toLowerCase().includes(q)||l.createdBy?.toLowerCase().includes(q));}
   if(dept)filtered=filtered.filter(l=>l.department===dept);
+  if (deptTab !== "all") {
+  filtered = filtered.filter(
+    l => l.department === deptTab
+  );
+}
   const pages=Math.ceil(filtered.length/PAGE), pg=Math.min(pageNum,Math.max(0,pages-1));
   const slice=filtered.slice(pg*PAGE,(pg+1)*PAGE);
 
@@ -987,7 +994,8 @@ function DashboardPage({ user, checklists, bookmarks, setChecklists, setBookmark
     <main className="max-w-7xl mx-auto px-4 py-5">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
-          <h2 className="text-lg font-bold text-[#1A2E24]">Good {greet}, {user.name?.split(" ")[0]||"User"} 👋</h2>
+
+
           <p className="text-xs text-[#6B8A78] font-mono">{new Date().toLocaleDateString("en-IN",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
         </div>
         {(user.role==="admin"||user.role==="operator")&&(
@@ -998,7 +1006,7 @@ function DashboardPage({ user, checklists, bookmarks, setChecklists, setBookmark
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
         {[{label:"Total",value:checklists.length,sub:"all checklists",icon:"📋",color:"bg-blue-50"},{label:"Today",value:todayLists.length,sub:"created today",icon:"📅",color:"bg-indigo-50"},{label:"Pending",value:statPending,sub:"awaiting review",icon:"⏳",color:"bg-yellow-50"},{label:"Approved",value:statApproved,sub:"approved",icon:"✅",color:"bg-green-50"},{label:"Bookmarked",value:bookmarks.length,sub:"templates",icon:"🔖",color:"bg-orange-50"}].map(s=>(
-          <div key={s.label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:-translate-y-0.5 transition-transform">
+          <div key={s.label} className="bg-white rounded-xl p-4 border -gray-100 shadow-sm hover:-translate-y-0.5 transition-transform">
             <div className="flex items-center justify-between mb-2"><span className="text-[10px] text-[#6B8A78] font-semibold uppercase tracking-wide">{s.label}</span><div className={`w-7 h-7 rounded-lg ${s.color} flex items-center justify-center text-sm`}>{s.icon}</div></div>
             <div className="text-2xl font-bold text-[#1A2E24] font-mono">{s.value}</div>
             <div className="text-[10px] text-[#6B8A78] mt-0.5">{s.sub}</div>
@@ -1011,6 +1019,41 @@ function DashboardPage({ user, checklists, bookmarks, setChecklists, setBookmark
       <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
         <div className="px-4 pt-4 pb-0 flex flex-wrap items-center justify-between gap-2">
           <div className="flex gap-1 flex-wrap">{TABS.map(([t,l])=><button key={t} onClick={()=>{setTab(t);setPageNum(0);}} className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all ${tab===t?"bg-[#3D8B6E] text-white":"text-gray-500 hover:bg-gray-100"}`}>{l}</button>)}</div>
+          <div className="w-full flex gap-1 flex-wrap mt-2">
+  {DEPTS.map(d => (
+    <button
+      key={d}
+      onClick={() => {
+        setDeptTab(d);
+        setPageNum(0);
+      }}
+      className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all ${
+        deptTab === d
+          ? "bg-[#3D8B6E] text-white"
+          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+      }`}
+    >
+      {d}
+      (
+      {checklists.filter(x => x.department === d).length}
+      )
+    </button>
+  ))}
+
+  <button
+    onClick={() => {
+      setDeptTab("all");
+      setPageNum(0);
+    }}
+    className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all ${
+      deptTab === "all"
+        ? "bg-[#3D8B6E] text-white"
+        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+    }`}
+  >
+    All
+  </button>
+</div>
           <div className="flex items-center gap-2">
             <input value={search} onChange={e=>{setSearch(e.target.value);setPageNum(0);}} placeholder="Search…" className="pl-3 pr-3 py-1.5 rounded-lg text-xs w-40 outline-none" style={{background:"#f6faf8",border:"1.5px solid #d0e8da"}}/>
             <select value={dept} onChange={e=>{setDept(e.target.value);setPageNum(0);}} className="px-2 py-1.5 rounded-lg text-xs outline-none" style={{background:"#f6faf8",border:"1.5px solid #d0e8da"}}>
@@ -1765,6 +1808,7 @@ function CalendarModal({ cl, calViewDate, setCalViewDate, calSelected, setCalSel
 //  CREATE MODAL — Approval settings removed
 // ═══════════════════════════════════════════════════════
 function CreateModal({ user, onClose, onCreate, prefill }) {
+  const isEditMode = !!prefill;
   const [form, setForm] = useState({
     name:          prefill ? prefill.name + " (Copy)" : "",
     createdBy:     prefill?.createdBy || user.name?.split(" ")[0] || "",
@@ -1794,7 +1838,7 @@ function CreateModal({ user, onClose, onCreate, prefill }) {
     const rows = parseInt(form.rows) || 5;
     const cols = parseInt(form.cols) || 4;
     const cl = {
-      id:            genId(),
+  id: prefill?.id || genId(),
       name:          form.name.trim(),
       createdBy:     form.createdBy || user.name,
       createdById:   user.id,
@@ -1808,7 +1852,7 @@ function CreateModal({ user, onClose, onCreate, prefill }) {
       fillType:      form.fillType,
       customOptions: opts,
       status:        STATUS.DRAFT,
-      createdAt:     now(),
+      createdAt: prefill?.createdAt || now(),
       tableData: {
         headers: Array.from({ length: cols }, (_, i) => ({ text: `Checkpoint ${i + 1}`, isFill: false })),
         rows:    Array.from({ length: rows }, () => Array.from({ length: cols }, () => ({ value: "" }))),
@@ -1842,8 +1886,9 @@ if (cols < 1) {
     <div className="fixed inset-0 bg-black/45 backdrop-blur-sm flex items-center justify-center z-50 p-3">
       <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         <div className="bg-[#3D8B6E] text-white px-5 py-3.5 flex items-center justify-between">
-          <h3 className="text-sm font-bold">✨ {prefill ? "Use Template" : "New Checklist"}</h3>
-          <button onClick={onClose} className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-xs">✕</button>
+<h3 className="text-sm font-bold">
+  ✨ {isEditMode ? "Edit Checklist" : "New Checklist"}
+</h3>          <button onClick={onClose} className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-xs">✕</button>
         </div>
         <div className="p-5 overflow-y-auto flex-1">
           <div className="grid grid-cols-2 gap-3">
@@ -1938,8 +1983,7 @@ if (cols < 1) {
         <div className="px-5 pb-5">
           <button onClick={handleCreate}
             className="px-5 py-2.5 rounded-xl bg-[#3D8B6E] text-white text-xs font-bold hover:bg-[#2A6B52] transition-all flex items-center gap-2">
-            ✨ Generate Checklist
-          </button>
+{isEditMode ? "Update Checklist" : "Generate Checklist"}          </button>
         </div>
       </div>
     </div>
@@ -2174,11 +2218,11 @@ function ChecklistPage({ user, checklists, bookmarks, setChecklists, setBookmark
     setBookmarks={setBookmarks}
     setChecklists={setChecklists}
 
-    onEditDetails={(cl)=>{
-      setPrefill(cl);
-      setShowCreate(true);
-      setView("landing");
-    }}
+    onBack={()=>{
+  setPrefill(activeCl);
+  setShowCreate(true);
+  setView("landing");
+}}
   />;
 }
 
@@ -2366,8 +2410,17 @@ function ChecklistPage({ user, checklists, bookmarks, setChecklists, setBookmark
       {showCreate&&(
         <CreateModal user={user} prefill={prefill} onClose={()=>setShowCreate(false)}
           onCreate={cl=>{
-            setChecklists(prev=>[...prev,cl]);
-            addAudit(cl.id,"Created",user,`Checklist "${cl.name}" created`,cl.name);
+setChecklists(prev => {
+  const exists = prev.find(x => x.id === cl.id);
+
+  if (exists) {
+    return prev.map(x =>
+      x.id === cl.id ? cl : x
+    );
+  }
+
+  return [...prev, cl];
+});            addAudit(cl.id,"Created",user,`Checklist "${cl.name}" created`,cl.name);
             addNotif({msg:`📝 "${cl.name}" created by ${user.name}`,time:now(),read:false});
             setShowCreate(false);showToast("Checklist created!");
             setActiveCl(cl);setIsViewMode(false);setView("editor");
