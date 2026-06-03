@@ -71,170 +71,215 @@ const PERM = {
 // ═══════════════════════════════════════════════════════
 //  PDF / PRINT ENGINE
 // ═══════════════════════════════════════════════════════
+// ── buildPrintHTML ────────────────────────────────────────────
+// Fixed: A3 @page directive, proper margins, table-only layout,
+// remark column included, no whole-page browser chrome printed.
 function buildPrintHTML(cl, auditEntries=[], paperSize="A4") {
-  const isA3 = paperSize==="A3";
-  const sc = cl.status==="approved"?{bg:"#d1fae5",c:"#065f46"}:cl.status==="rejected"?{bg:"#fee2e2",c:"#991b1b"}:cl.status==="submitted"||cl.status==="pending"?{bg:"#dbeafe",c:"#1e40af"}:{bg:"#f3f4f6",c:"#374151"};
-  const pgW = isA3?"297mm":"210mm";
-  const pgH = isA3?"420mm":"297mm";
+  const isA3  = paperSize === "A3";
+  const sc    = cl.status==="approved"  ? {bg:"#d1fae5",c:"#065f46"}
+               :cl.status==="rejected"  ? {bg:"#fee2e2",c:"#991b1b"}
+               :(cl.status==="submitted"||cl.status==="pending") ? {bg:"#dbeafe",c:"#1e40af"}
+               : {bg:"#f3f4f6",c:"#374151"};
 
-  const rows = cl.tableData?.rows||[];
-  const hdrs = cl.tableData?.headers||[];
-  const totalFillCells = rows.length * hdrs.filter(h=>h.isFill).length;
-  const filledFillCells= rows.reduce((a,r)=>a+r.filter((c,ci)=>hdrs[ci]?.isFill&&c.value).length,0);
-  const pct = totalFillCells>0?Math.round(filledFillCells/totalFillCells*100):0;
+  const rows = cl.tableData?.rows || [];
+  const hdrs = cl.tableData?.headers || [];
+
+  // Count fill completeness
+  const fillIdxs = hdrs.reduce((a,h,i)=>{ if(h.isFill) a.push(i); return a; }, []);
+  const totalFill  = rows.length * fillIdxs.length;
+  const filledFill = rows.reduce((a,r)=>a + fillIdxs.filter(ci=>r[ci]?.value).length, 0);
+  const pct = totalFill > 0 ? Math.round(filledFill/totalFill*100) : 0;
+
+  // Determine if any row has a remark value
+  const hasRemarks = rows.some(r => r.some(c => c.remark));
+
+  // Font size scales with paper
+  const tblFont = isA3 ? "11px" : "10px";
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>${cl.name} — Checklist Report</title>
+<title>${cl.name}</title>
 <style>
-  @page { size: ${isA3?"A3":"A4"} portrait; margin: 12mm 14mm 12mm 14mm; }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Segoe UI',Helvetica,Arial,sans-serif;background:#fff;color:#1A2E24;padding:0;font-size:11px;}
-  .page{width:${pgW};min-height:${pgH};padding:16mm 18mm;background:#fff;}
+/* ── Page setup: critical for A3 to actually print A3 ── */
+@page {
+  size: ${isA3 ? "A3" : "A4"} portrait;
+  margin: 14mm 16mm 14mm 16mm;
+}
+/* Reset */
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{
+  font-family:'Segoe UI',Arial,sans-serif;
+  font-size:${tblFont};
+  color:#1A2E24;
+  background:#fff;
+  /* Do NOT set width/height — let @page control paper */
+}
+/* Wrapper just for padding in browser preview */
+.doc{padding:0;}
 
-  /* Header */
-  .doc-header{border-bottom:3px solid #3D8B6E;padding-bottom:14px;margin-bottom:18px;}
-  .brand{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#6B8A78;margin-bottom:5px;}
-  .doc-title{font-size:${isA3?"26px":"22px"};font-weight:700;color:#1A2E24;margin-bottom:6px;line-height:1.2;}
-  .badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;background:${sc.bg};color:${sc.c};border:1px solid ${sc.c}44;}
+/* ── Header strip ── */
+.dh{border-bottom:3px solid #3D8B6E;padding-bottom:10px;margin-bottom:12px;}
+.brand{font-size:8px;text-transform:uppercase;letter-spacing:2px;color:#6B8A78;margin-bottom:4px;}
+.dtitle{font-size:${isA3?"22px":"18px"};font-weight:700;color:#1A2E24;margin-bottom:4px;line-height:1.2;}
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:8px;font-weight:700;text-transform:uppercase;background:${sc.bg};color:${sc.c};border:1px solid ${sc.c}44;}
 
-  /* Meta grid */
-  .meta-grid{display:grid;grid-template-columns:repeat(${isA3?4:3},1fr);gap:10px;background:#f6faf8;padding:14px;border-radius:10px;margin:14px 0;}
-  .meta-item label{display:block;font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#6B8A78;margin-bottom:2px;}
-  .meta-item span{font-size:11px;font-weight:600;color:#374151;}
+/* ── Meta info grid ── */
+.meta{display:grid;grid-template-columns:repeat(${isA3?5:4},1fr);gap:8px;background:#f6faf8;padding:10px;border-radius:8px;margin:10px 0;}
+.mi label{display:block;font-size:7px;text-transform:uppercase;letter-spacing:1px;color:#6B8A78;margin-bottom:1px;}
+.mi span{font-size:10px;font-weight:600;color:#374151;}
 
-  /* Progress */
-  .prog-wrap{margin:12px 0;}
-  .prog-label{display:flex;justify-content:space-between;font-size:10px;color:#6B8A78;margin-bottom:4px;}
-  .prog-label strong{color:${pct===100?"#059669":"#3D8B6E"};}
-  .prog-bg{background:#e5e7eb;border-radius:5px;height:7px;overflow:hidden;}
-  .prog-fill{height:100%;background:${pct===100?"#059669":"#3D8B6E"};width:${pct}%;border-radius:5px;}
+/* ── Progress bar ── */
+.prog{margin:8px 0;}
+.prog-lbl{display:flex;justify-content:space-between;font-size:9px;color:#6B8A78;margin-bottom:3px;}
+.prog-lbl strong{color:${pct===100?"#059669":"#3D8B6E"};}
+.prog-bg{background:#e5e7eb;border-radius:4px;height:6px;overflow:hidden;}
+.prog-fill{height:100%;background:${pct===100?"#059669":"#3D8B6E"};width:${pct}%;}
 
-  /* Section header */
-  .sec-hdr{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#6B8A78;margin:20px 0 10px;padding-top:14px;border-top:1px solid #e5e7eb;}
+/* ── Section headings ── */
+.sh{font-size:8px;text-transform:uppercase;letter-spacing:1.5px;color:#6B8A78;margin:14px 0 6px;padding-top:10px;border-top:1px solid #e5e7eb;}
 
-  /* Table */
-  table{width:100%;border-collapse:collapse;margin-top:4px;font-size:${isA3?"11px":"10px"};}
-  th{background:#3D8B6E;color:#fff;padding:6px 8px;text-align:left;font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;}
-  th.fill-hdr{background:#1e5c42;}
-  td{border:1px solid #d1d5db;padding:5px 8px;vertical-align:middle;}
-  tr:nth-child(even) td{background:#f9fafb;}
-  tr:nth-child(odd) td{background:#fff;}
+/* ── Main checklist table — fills page width ── */
+table.cl-tbl{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;   /* columns share width proportionally */
+  font-size:${tblFont};
+  margin-top:4px;
+  page-break-inside:auto;
+}
+table.cl-tbl thead{display:table-header-group;} /* repeat header on page break */
+table.cl-tbl th{
+  background:#3D8B6E;color:#fff;
+  padding:5px 6px;text-align:left;
+  font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;
+  border:1px solid #c5d9d1;
+  word-break:break-word;
+}
+table.cl-tbl th.fh{background:#1e5c42;}
+table.cl-tbl th.rh{background:#4a3a6b;} /* remark header — purple tint */
+table.cl-tbl td{
+  border:1px solid #d1d5db;
+  padding:4px 6px;
+  vertical-align:top;
+  word-break:break-word;
+}
+table.cl-tbl tr:nth-child(even) td{background:#f9fafb;}
+table.cl-tbl tr:nth-child(odd)  td{background:#fff;}
+table.cl-tbl td.fill-cell{background:#fffde7 !important;}
+table.cl-tbl td.rmk-cell{background:#f5f0ff !important;font-style:italic;color:#5b21b6;}
+table.cl-tbl td.num-cell{text-align:center;font-weight:700;color:#6b7280;background:#e5e7eb !important;width:28px;}
 
-  /* Info boxes */
-  .info-box{border-radius:8px;padding:12px 16px;margin-top:10px;}
-  .info-box.green{background:#f0fdf4;border:1px solid #86efac;}
-  .info-box.red{background:#fef2f2;border:1px solid #fca5a5;}
-  .info-box.blue{background:#eff6ff;border:1px solid #bfdbfe;}
-  .info-box .box-title{font-size:11px;font-weight:700;margin-bottom:5px;}
-  .info-box.green .box-title{color:#166534;}
-  .info-box.red .box-title{color:#991b1b;}
-  .info-box.blue .box-title{color:#1e40af;}
-  .info-box .box-body{font-size:11px;color:#374151;line-height:1.6;}
+/* ── Info boxes ── */
+.ibox{border-radius:6px;padding:8px 12px;margin-top:8px;font-size:10px;}
+.ibox-blue{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;}
+.ibox-green{background:#f0fdf4;border:1px solid #86efac;color:#166534;}
+.ibox-red{background:#fef2f2;border:1px solid #fca5a5;color:#991b1b;}
+.ibox strong{display:block;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
 
-  /* Approval panel */
-  .approval-panel{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;}
-  .approval-card{background:#f6faf8;border:1px solid #d0e8da;border-radius:8px;padding:12px;}
-  .approval-card label{display:block;font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#6B8A78;margin-bottom:3px;}
-  .approval-card span{font-size:11px;font-weight:600;color:#1A2E24;}
+/* ── Approval cards ── */
+.apcards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;}
+.apcard{background:#f6faf8;border:1px solid #d0e8da;border-radius:6px;padding:8px;}
+.apcard label{display:block;font-size:7px;text-transform:uppercase;letter-spacing:1px;color:#6B8A78;margin-bottom:2px;}
+.apcard span{font-size:10px;font-weight:600;}
 
-  /* Audit */
-  .audit-row{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6;font-size:10px;}
-  .audit-time{color:#9ca3af;flex-shrink:0;width:${isA3?"160px":"140px"};}
-  .audit-action{font-weight:700;color:#1e3a5f;flex-shrink:0;width:${isA3?"140px":"120px"};}
-  .audit-detail{color:#6B8A78;flex:1;}
+/* ── Audit trail ── */
+.aud{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid #f3f4f6;font-size:9px;}
+.aud-t{color:#9ca3af;flex-shrink:0;width:120px;}
+.aud-a{font-weight:700;color:#1e3a5f;flex-shrink:0;width:100px;}
+.aud-d{color:#6B8A78;flex:1;}
 
-  /* Footer */
-  .doc-footer{margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;font-size:9px;color:#9ca3af;}
+/* ── Footer ── */
+.ft{margin-top:16px;padding-top:8px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;font-size:8px;color:#9ca3af;}
 
-  @media print{
-    body{padding:0;}
-    .page{padding:0;width:auto;}
-    @page{margin:12mm 14mm;}
-  }
+/* ── Print: hide browser UI, use @page margins ── */
+@media print{
+  html,body{margin:0;padding:0;}
+  .doc{padding:0;}
+}
 </style>
 </head>
 <body>
-<div class="page">
-  <!-- Header -->
-  <div class="doc-header">
-    <div class="brand">Smart Checklist · Manufacturing Management System · Official Record</div>
-    <div class="doc-title">${cl.name}</div>
-    <span class="badge">${STATUS_LABEL[cl.status]||cl.status}</span>
+<div class="doc">
+
+  <!-- Document header -->
+  <div class="dh">
+    <div class="brand">Manufacturing Checklist System · Official Record</div>
+    <div class="dtitle">${cl.name}</div>
+    <span class="badge">${(STATUS_LABEL[cl.status]||cl.status).replace(/[📝🔒📤⏳✅❌⊘]/g,"").trim()}</span>
+    ${cl.clonedFrom?`<span style="margin-left:6px;font-size:8px;color:#6B8A78;">⎘ Clone</span>`:""}
   </div>
 
-  <!-- Meta -->
-  <div class="meta-grid">
-    <div class="meta-item"><label>Checklist ID</label><span>${cl.id}</span></div>
-    <div class="meta-item"><label>Department</label><span>${cl.department||"—"}</span></div>
-    <div class="meta-item"><label>Shift</label><span>${cl.shift||"—"}</span></div>
-    <div class="meta-item"><label>Schedule</label><span>${cl.frequency||"—"}</span></div>
-    <div class="meta-item"><label>Created By</label><span>${cl.createdBy||"—"}</span></div>
-    <div class="meta-item"><label>Fill Type</label><span>${cl.fillType||"—"}</span></div>
-    ${cl.createdAt?`<div class="meta-item"><label>Created At</label><span>${fmtDT(cl.createdAt)}</span></div>`:""}
-    ${cl.finalizedAt?`<div class="meta-item"><label>Finalized At</label><span>${fmtDT(cl.finalizedAt)}</span></div>`:""}
-    ${cl.submittedAt?`<div class="meta-item"><label>Submitted At</label><span>${fmtDT(cl.submittedAt)}</span></div>`:""}
-    ${cl.approvedAt?`<div class="meta-item"><label>Approved At</label><span>${fmtDT(cl.approvedAt)}</span></div>`:""}
-    ${cl.rejectedAt?`<div class="meta-item"><label>Rejected At</label><span>${fmtDT(cl.rejectedAt)}</span></div>`:""}
+  <!-- Meta info -->
+  <div class="meta">
+    <div class="mi"><label>Checklist ID</label><span>${cl.id}</span></div>
+    <div class="mi"><label>Department</label><span>${cl.department||"—"}</span></div>
+    <div class="mi"><label>Shift</label><span>${cl.shift||"—"}</span></div>
+    <div class="mi"><label>Schedule</label><span>${cl.frequency||"—"}</span></div>
+    <div class="mi"><label>Created By</label><span>${cl.createdBy||"—"}</span></div>
+    <div class="mi"><label>Fill Type</label><span>${cl.fillType||"—"}</span></div>
+    ${cl.approverName?`<div class="mi"><label>Approver</label><span>${cl.approverName}</span></div>`:""}
+    ${cl.createdAt?`<div class="mi"><label>Created</label><span>${fmtDT(cl.createdAt)}</span></div>`:""}
+    ${cl.finalizedAt?`<div class="mi"><label>Finalized</label><span>${fmtDT(cl.finalizedAt)}</span></div>`:""}
+    ${cl.submittedAt?`<div class="mi"><label>Submitted</label><span>${fmtDT(cl.submittedAt)}</span></div>`:""}
+    ${cl.approvedAt?`<div class="mi"><label>Approved</label><span>${fmtDT(cl.approvedAt)}</span></div>`:""}
+    ${cl.rejectedAt?`<div class="mi"><label>Rejected</label><span>${fmtDT(cl.rejectedAt)}</span></div>`:""}
+    ${cl.selectedDate?`<div class="mi"><label>Fill Date</label><span>${cl.selectedDate}</span></div>`:""}
   </div>
 
-  <!-- Progress -->
-  <div class="prog-wrap">
-    <div class="prog-label"><span>Data Fill Completion</span><strong>${filledFillCells}/${totalFillCells} cells · ${pct}%</strong></div>
+  <!-- Fill completion progress -->
+  <div class="prog">
+    <div class="prog-lbl"><span>Fill Completion</span><strong>${filledFill}/${totalFill} cells · ${pct}%</strong></div>
     <div class="prog-bg"><div class="prog-fill"></div></div>
   </div>
 
-  ${cl.submissionRemarks?`<div class="info-box blue"><div class="box-title">📤 Submission Remarks</div><div class="box-body">${cl.submissionRemarks}</div></div>`:""}
+  ${cl.submissionRemarks?`<div class="ibox ibox-blue"><strong>Submission Remarks</strong>${cl.submissionRemarks}</div>`:""}
+  ${cl.submissionComments?`<div class="ibox ibox-blue" style="margin-top:4px;"><strong>Submission Comments</strong>${cl.submissionComments}</div>`:""}
 
-  <!-- Approval Details (only if approved/rejected) -->
+  <!-- Approval / Rejection details -->
   ${(cl.status==="approved"||cl.status==="rejected")?`
-  <div class="sec-hdr">${cl.status==="approved"?"Approval Details":"Rejection Details"}</div>
-  <div class="approval-panel">
-    <div class="approval-card"><label>${cl.status==="approved"?"Approved By":"Rejected By"}</label><span>${cl.approvedBy||cl.rejectedBy||"—"}</span></div>
-    <div class="approval-card"><label>${cl.status==="approved"?"Approved At":"Rejected At"}</label><span>${fmtDT(cl.approvedAt||cl.rejectedAt)}</span></div>
-    ${cl.rejectionReason?`<div class="approval-card" style="grid-column:1/-1"><label>Rejection Reason</label><span>${cl.rejectionReason}</span></div>`:""}
-    ${cl.approvalRemarks?`<div class="approval-card" style="grid-column:1/-1"><label>Approval Remarks</label><span>${cl.approvalRemarks}</span></div>`:""}
-  </div>
-  `:""}
+  <div class="sh">${cl.status==="approved"?"Approval Details":"Rejection Details"}</div>
+  <div class="apcards">
+    <div class="apcard"><label>${cl.status==="approved"?"Approved By":"Rejected By"}</label><span>${cl.approvedBy||cl.rejectedBy||"—"}</span></div>
+    <div class="apcard"><label>${cl.status==="approved"?"Approved At":"Rejected At"}</label><span>${fmtDT(cl.approvedAt||cl.rejectedAt)}</span></div>
+    ${cl.rejectionReason?`<div class="apcard" style="grid-column:1/-1"><label>Rejection Reason</label><span>${cl.rejectionReason}</span></div>`:""}
+    ${cl.approvalRemarks?`<div class="apcard" style="grid-column:1/-1"><label>Approver Remarks</label><span>${cl.approvalRemarks}</span></div>`:""}
+  </div>`:""}
 
-  <!-- Checklist Data -->
-  <div class="sec-hdr">Checklist Data</div>
-  <table>
+  <!-- ════ CHECKLIST TABLE ════ -->
+  <div class="sh">Checklist Data</div>
+  <table class="cl-tbl">
     <thead>
       <tr>
-        <th style="width:32px;text-align:center;">#</th>
-        ${hdrs.map(h=>`<th class="${h.isFill?"fill-hdr":""}">${h.text}</th>`).join("")}
+        <th style="width:24px;text-align:center;">#</th>
+        ${hdrs.map(h=>`<th class="${h.isFill?"fh":""}">${h.text}</th>`).join("")}
+        ${hasRemarks?`<th class="rh" style="width:${isA3?"160px":"120px"};">Remarks</th>`:""}
       </tr>
     </thead>
     <tbody>
       ${rows.map((row,i)=>`
         <tr>
-          <td style="text-align:center;font-weight:700;color:#6b7280;background:#e5e7eb;">${i+1}</td>
-          ${row.map((cell,ci)=>`<td${hdrs[ci]?.isFill?' style="background:#fffbeb;"':""}>${cell.value??""}</td>`).join("")}
+          <td class="num-cell">${i+1}</td>
+          ${row.map((cell,ci)=>`<td class="${hdrs[ci]?.isFill?"fill-cell":""}">${cell.value??""}</td>`).join("")}
+          ${hasRemarks?`<td class="rmk-cell">${row.find(c=>c.remark)?.remark||""}</td>`:""}
         </tr>
       `).join("")}
     </tbody>
   </table>
 
-  <!-- Audit Trail -->
+  <!-- Audit trail -->
   ${auditEntries.length?`
-  <div class="sec-hdr">Audit Trail</div>
-  ${auditEntries.map(a=>`
-    <div class="audit-row">
-      <span class="audit-time">${fmtDT(a.timestamp)}</span>
-      <span class="audit-action">${a.action}</span>
-      <span class="audit-detail">${a.userName} — ${a.details}</span>
-    </div>
-  `).join("")}
+  <div class="sh">Audit Trail</div>
+  ${auditEntries.map(a=>`<div class="aud"><span class="aud-t">${fmtDT(a.timestamp)}</span><span class="aud-a">${a.action}</span><span class="aud-d">${a.userName} — ${a.details}</span></div>`).join("")}
   `:""}
 
   <!-- Footer -->
-  <div class="doc-footer">
-    <span>Generated: ${fmtDT(now())} · Paper: ${paperSize}</span>
-    <span>Checklist ID: ${cl.id} · Smart Checklist v4.0</span>
+  <div class="ft">
+    <span>Generated: ${fmtDT(now())} · ${paperSize}</span>
+    <span>ID: ${cl.id} · Manufacturing Checklist System</span>
   </div>
+
 </div>
 </body>
 </html>`;
@@ -505,113 +550,136 @@ function ApprovalActionModal({ checklist, type, onConfirm, onClose }) {
 
 // ═══════════════════════════════════════════════════════
 //  SUBMIT FOR APPROVAL MODAL
+//  — Submitter can set/override approver name + email inline
+//  — Rich message box for the approver
+//  — Shows full checklist summary before confirming
 // ═══════════════════════════════════════════════════════
 function SubmitApprovalModal({ cl, onConfirm, onClose }) {
   const [approverName,  setApproverName]  = useState(cl.approverName  || "");
   const [approverEmail, setApproverEmail] = useState(cl.approverEmail || "");
-  const [remarks,       setRemarks]       = useState("");
-  const [comments,      setComments]      = useState("");
-  const [err,           setErr]           = useState("");
+  const [message,       setMessage]       = useState("");
+  const [err, setErr] = useState("");
 
   function handleSubmit() {
-    if (!approverName.trim()) {
-      setErr("Approver name is required.");
-      return;
-    }
-    onConfirm({ approverName, approverEmail, remarks, comments });
+    if (!approverName.trim()) { setErr("Approver name is required before submitting."); return; }
+    onConfirm({ approverName: approverName.trim(), approverEmail: approverEmail.trim(), message });
   }
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[150] p-4">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
-        {/* Header */}
-        <div className="bg-[#3D8B6E] text-white px-5 py-3.5 flex items-center justify-between">
+
+        {/* ── Header ── */}
+        <div className="bg-[#1e5c42] text-white px-5 py-4 flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-sm font-bold">📤 Submit for Approval</h3>
-            <p className="text-[10px] text-green-200 mt-0.5">
-              The approver will be notified to review this checklist.
-            </p>
+            <div className="flex items-center gap-2 mb-0.5">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              <h3 className="text-sm font-bold">Submit for Approval</h3>
+            </div>
+            <p className="text-[10px] text-green-200 font-mono">All fields lock until the approver acts</p>
           </div>
-          <button onClick={onClose}
-            className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-xs font-bold">✕</button>
+          <button onClick={onClose} className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-xs font-bold flex-shrink-0">✕</button>
         </div>
 
-        <div className="p-5 space-y-3 overflow-y-auto max-h-[80vh]">
-          {/* Checklist summary */}
-          <div className="bg-[#f6faf8] rounded-xl p-3 text-xs border border-[#d0e8da] space-y-1">
-            <div><span className="text-[#6B8A78]">Checklist:</span> <span className="font-semibold">{cl.name}</span></div>
-            <div><span className="text-[#6B8A78]">ID:</span> <span className="font-mono text-[10px]">{cl.id}</span></div>
-            <div><span className="text-[#6B8A78]">Department:</span> <span className="font-semibold">{cl.department}</span></div>
+        <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+
+          {/* ── Checklist summary ── */}
+          <div className="bg-[#f6faf8] border border-[#d0e8da] rounded-xl px-4 py-3 text-xs space-y-1.5">
+            <p className="text-[10px] font-bold text-[#6B8A78] uppercase tracking-wide mb-2">Checklist Being Submitted</p>
+            <div className="flex items-center justify-between">
+              <span className="text-[#6B8A78]">Name</span>
+              <span className="font-semibold text-[#1A2E24]">{cl.name}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[#6B8A78]">ID</span>
+              <span className="font-mono text-[10px] text-[#1A2E24]">{cl.id}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[#6B8A78]">Department</span>
+              <span className="font-semibold text-[#1A2E24]">{cl.department}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[#6B8A78]">Shift</span>
+              <span className="font-semibold text-[#1A2E24]">{cl.shift}</span>
+            </div>
           </div>
 
-          {/* Approver Name */}
+          {/* ── Approver Name ── */}
           <div>
             <label className="block text-[10px] font-bold text-[#6B8A78] uppercase mb-1.5">
               Approver Name <span className="text-red-500">*</span>
             </label>
-            <input
-              value={approverName}
-              onChange={e => { setApproverName(e.target.value); setErr(""); }}
-              placeholder="e.g. Mr. Sharma / QC Manager"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#3D8B6E]"
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B8A78]">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </span>
+              <input
+                value={approverName}
+                onChange={e => { setApproverName(e.target.value); setErr(""); }}
+                placeholder="e.g. Mr. Sharma / QC Manager"
+                className="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-xs outline-none focus:border-[#3D8B6E] focus:ring-2 focus:ring-[#3D8B6E]/10"
+              />
+            </div>
           </div>
 
-          {/* Approver Email */}
+          {/* ── Approver Email ── */}
           <div>
             <label className="block text-[10px] font-bold text-[#6B8A78] uppercase mb-1.5">
-              Approver Email <span className="text-[#6B8A78] font-normal">(optional)</span>
+              Approver Email <span className="text-[#9ca3af] font-normal normal-case">(optional)</span>
             </label>
-            <input
-              type="email"
-              value={approverEmail}
-              onChange={e => setApproverEmail(e.target.value)}
-              placeholder="approver@company.com"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#3D8B6E]"
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B8A78]">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </span>
+              <input
+                type="email"
+                value={approverEmail}
+                onChange={e => setApproverEmail(e.target.value)}
+                placeholder="approver@company.com"
+                className="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-xs outline-none focus:border-[#3D8B6E] focus:ring-2 focus:ring-[#3D8B6E]/10"
+              />
+            </div>
           </div>
 
-          {/* Message / Remarks */}
+          {/* ── Message to approver ── */}
           <div>
             <label className="block text-[10px] font-bold text-[#6B8A78] uppercase mb-1.5">
-              Message / Remarks <span className="text-[#6B8A78] font-normal">(optional)</span>
-            </label>
-            <textarea
-              rows={2}
-              value={remarks}
-              onChange={e => setRemarks(e.target.value)}
-              placeholder="Add notes or context for the approver…"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs resize-none outline-none focus:border-[#3D8B6E]"
-            />
-          </div>
-
-          {/* Comments */}
-          <div>
-            <label className="block text-[10px] font-bold text-[#6B8A78] uppercase mb-1.5">
-              Additional Comments <span className="text-[#6B8A78] font-normal">(optional)</span>
+              Message to Approver <span className="text-[#9ca3af] font-normal normal-case">(optional)</span>
             </label>
             <textarea
-              rows={2}
-              value={comments}
-              onChange={e => setComments(e.target.value)}
-              placeholder="Any special observations, safety notes, or flags…"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs resize-none outline-none focus:border-[#3D8B6E]"
+              rows={4}
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+              placeholder="Add context, observations, or any notes for the approver…&#10;e.g. Line 2 morning shift — all readings within spec. Please review fill columns 3–5."
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs resize-none outline-none focus:border-[#3D8B6E] focus:ring-2 focus:ring-[#3D8B6E]/10 leading-relaxed"
             />
+            <p className="text-[10px] text-[#9ca3af] mt-1">{message.length} characters</p>
           </div>
 
-          {err && <p className="text-red-500 text-[11px] font-semibold">{err}</p>}
+          {err && (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <p className="text-red-600 text-[11px] font-semibold">{err}</p>
+            </div>
+          )}
 
-          <p className="text-[9px] text-gray-400">
-            All fields will be locked until the approver takes an action.
-          </p>
+          {/* ── Warning note ── */}
+          <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <p className="text-[10px] text-amber-700 leading-relaxed">
+              After submission, <strong>all checklist fields lock</strong>. The approver will be able to Approve or Reject. You can cancel the submission to edit again if needed.
+            </p>
+          </div>
 
+          {/* ── Actions ── */}
           <div className="flex gap-2 pt-1">
             <button onClick={handleSubmit}
-              className="flex-1 py-2.5 rounded-xl bg-[#3D8B6E] text-white text-xs font-bold hover:bg-[#2A6B52]">
-              📤 Submit for Approval
+              className="flex-1 py-2.5 rounded-xl bg-[#1e5c42] hover:bg-[#14412e] text-white text-xs font-bold flex items-center justify-center gap-2 transition-all">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              Submit for Approval
             </button>
             <button onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200">
+              className="px-5 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-xs font-semibold hover:bg-gray-200 transition-all">
               Cancel
             </button>
           </div>
@@ -620,7 +688,6 @@ function SubmitApprovalModal({ cl, onConfirm, onClose }) {
     </div>
   );
 }
-  
 
 // ═══════════════════════════════════════════════════════
 //  ASSIGN APPROVER MODAL
@@ -819,18 +886,9 @@ function DashboardPage({ user, checklists, bookmarks, setChecklists, setBookmark
     <main className="max-w-7xl mx-auto px-4 py-5">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
-  <h2 className="text-lg font-bold text-[#1A2E24]">
-    Smart Checklist Dashboard
-  </h2>
-  <p className="text-xs text-[#6B8A78] font-mono">
-    {new Date().toLocaleDateString("en-IN",{
-      weekday:"long",
-      year:"numeric",
-      month:"long",
-      day:"numeric"
-    })}
-  </p>
-</div>
+          <h2 className="text-lg font-bold text-[#1A2E24]">Good {greet}, {user.name?.split(" ")[0]||"User"} 👋</h2>
+          <p className="text-xs text-[#6B8A78] font-mono">{new Date().toLocaleDateString("en-IN",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+        </div>
         {(user.role==="admin"||user.role==="operator")&&(
           <button onClick={()=>{setPage("checklist");setChecklistAction({type:"create"});}}
             className="bg-[#3D8B6E] hover:bg-[#2A6B52] text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all">+ New Checklist</button>
@@ -847,12 +905,7 @@ function DashboardPage({ user, checklists, bookmarks, setChecklists, setBookmark
         ))}
       </div>
 
-      <div className="bg-[#f0faf5] border border-[#b6d6c8] rounded-xl px-4 py-2.5 mb-5 flex flex-wrap items-center gap-1.5 text-xs overflow-x-auto">
-        <span className="font-bold text-[#3D8B6E] mr-1 whitespace-nowrap">Workflow:</span>
-        {["📝 Draft","→","🔒 Finalized","→","📤 Submitted","→","⏳ Pending","→","✅ Approved / ❌ Rejected"].map((s,i)=>(
-          <span key={i} className={s==="→"?"text-gray-400":"bg-white border border-[#d0e8da] rounded px-2 py-0.5 font-mono text-[10px] text-[#3D8B6E] whitespace-nowrap"}>{s}</span>
-        ))}
-      </div>
+      
 
       <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
         <div className="px-4 pt-4 pb-0 flex flex-wrap items-center justify-between gap-2">
@@ -940,9 +993,56 @@ function DashboardPage({ user, checklists, bookmarks, setChecklists, setBookmark
             </tbody>
           </table>
         </div>
-        <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
-          <span className="text-[10px] text-[#6B8A78]">{filtered.length} record{filtered.length!==1?"s":""}</span>
-          <div className="flex gap-1.5">{pages>1&&Array.from({length:pages},(_,i)=><button key={i} onClick={()=>setPageNum(i)} className={`w-6 h-6 rounded-md text-[10px] font-semibold ${i===pg?"bg-[#3D8B6E] text-white":"bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>{i+1}</button>)}</div>
+        <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between gap-3 flex-wrap">
+          <span className="text-[10px] text-[#6B8A78] font-mono">
+            {filtered.length} record{filtered.length!==1?"s":""}{pages>1?` · Page ${pg+1} of ${pages}`:""}
+          </span>
+          {pages>1&&(
+            <div className="flex items-center gap-1">
+              {/* ← Prev */}
+              <button
+                onClick={()=>setPageNum(p=>Math.max(0,p-1))}
+                disabled={pg===0}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-[#e8f5ee] hover:border-[#3D8B6E] hover:text-[#3D8B6E] disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Prev
+              </button>
+
+              {/* Page number buttons — max 5 visible with ellipsis */}
+              {Array.from({length:pages},(_,i)=>i)
+                .filter(i=>{
+                  if(pages<=5) return true;
+                  if(i===0||i===pages-1) return true;
+                  if(Math.abs(i-pg)<=1) return true;
+                  return false;
+                })
+                .reduce((acc,i,idx,arr)=>{
+                  if(idx>0 && arr[idx-1]!==i-1) acc.push("…");
+                  acc.push(i);
+                  return acc;
+                },[])
+                .map((item,idx)=>
+                  item==="…"
+                    ? <span key={`e${idx}`} className="px-1 text-[11px] text-gray-400 select-none">…</span>
+                    : <button
+                        key={item}
+                        onClick={()=>setPageNum(item)}
+                        className={`w-7 h-7 rounded-lg text-[11px] font-semibold transition-all border ${item===pg?"bg-[#3D8B6E] text-white border-[#3D8B6E] shadow-sm":"bg-white text-gray-600 border-gray-200 hover:bg-[#e8f5ee] hover:border-[#3D8B6E] hover:text-[#3D8B6E]"}`}>
+                        {item+1}
+                      </button>
+                )
+              }
+
+              {/* Next → */}
+              <button
+                onClick={()=>setPageNum(p=>Math.min(pages-1,p+1))}
+                disabled={pg>=pages-1}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-[#e8f5ee] hover:border-[#3D8B6E] hover:text-[#3D8B6E] disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                Next
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1055,6 +1155,22 @@ function ChecklistEditor({ cl:initialCl, viewMode, user, auditLog, onSaveClose, 
   function addFillCol(){setCl(p=>{const count=p.tableData.headers.filter(h=>h.isFill).length;return{...p,tableData:{headers:[...p.tableData.headers,{text:`Fill ${count+1}`,isFill:true}],rows:p.tableData.rows.map(r=>[...r,{value:""}])}};});}
   function removeFillCol(){setCl(p=>{const idx=p.tableData.headers.map((h,i)=>({h,i})).filter(x=>x.h.isFill).map(x=>x.i);if(!idx.length){showToast("No fill columns to remove");return p;}const last=idx[idx.length-1];return{...p,tableData:{headers:p.tableData.headers.filter((_,i)=>i!==last),rows:p.tableData.rows.map(r=>r.filter((_,i)=>i!==last))}};});}
 
+  // Update the row-level remark stored on row[0].remark
+  // Using row[0] as a carrier is safe since we never allow 0 cols
+  function updateRowRemark(ri, val) {
+    setCl(p=>({
+      ...p,
+      tableData:{
+        ...p.tableData,
+        rows: p.tableData.rows.map((row,r)=>
+          r===ri
+            ? row.map((cell,ci)=> ci===0 ? {...cell, remark:val} : cell)
+            : row
+        )
+      }
+    }));
+  }
+
   function save(goBack){
     if(!editable){showToast("Checklist is locked");return;}
     const updated={...cl,updatedAt:now()};
@@ -1073,36 +1189,32 @@ function ChecklistEditor({ cl:initialCl, viewMode, user, auditLog, onSaveClose, 
     showToast("🔒 Checklist finalized! Fields are now locked.");
   }
 
-  // Inside ChecklistEditor — replace handleSubmitConfirm:
-function handleSubmitConfirm({ approverName, approverEmail, remarks, comments }) {
-  const ts = now();
-  const updated = {
-    ...cl,
-    status:             STATUS.SUBMITTED,
-    submittedAt:        ts,
-    updatedAt:          ts,
-    approverName:       approverName || cl.approverName,
-    approverEmail:      approverEmail || cl.approverEmail,
-    submissionRemarks:  remarks,
-    submissionComments: comments,
-  };
-  if (cl.selectedDate)
-    updated.dateEntries = { ...(cl.dateEntries || {}), [cl.selectedDate]: cl.tableData };
-  persist(updated);
-  setCl(updated);
-  addAudit(cl.id, "Submitted", user,
-    `Submitted to ${approverName}. Remarks: ${remarks || "none"}. Comments: ${comments || "none"}`,
-    cl.name);
-  addNotif({
-    msg: `📤 "${cl.name}" submitted to ${approverName} by ${user.name}`,
-    time: ts,
-    read: false,
-  });
-  showToast("📤 Submitted for Approval!");
-  setShowSubmitModal(false);
-  setTimeout(onSaveClose, 700);
-}
-  
+  function handleSubmitConfirm(remarksOrObj){
+    // SubmitApprovalModal may pass a string (old) or object {approverName,approverEmail,remarks,comments}
+    const isObj = typeof remarksOrObj === "object" && remarksOrObj !== null;
+    const approverName  = isObj ? (remarksOrObj.approverName  || cl.approverName  || "") : (cl.approverName  || "");
+    const approverEmail = isObj ? (remarksOrObj.approverEmail || cl.approverEmail || "") : (cl.approverEmail || "");
+    const remarks       = isObj ? (remarksOrObj.remarks  || "") : (remarksOrObj || "");
+    const comments      = isObj ? (remarksOrObj.comments || "") : "";
+
+    const ts=now();
+    const updated={
+      ...cl,
+      status:STATUS.SUBMITTED, submittedAt:ts, updatedAt:ts,
+      approverName, approverEmail,
+      submissionRemarks:remarks,
+      submissionComments:comments,
+    };
+    if(cl.selectedDate)updated.dateEntries={...(cl.dateEntries||{}),[cl.selectedDate]:cl.tableData};
+    persist(updated);setCl(updated);
+    addAudit(cl.id,"Submitted",user,
+      `Submitted to ${approverName||"approver"}. Remarks: ${remarks||"none"}${comments?`. Comments: ${comments}`:""}`,
+      cl.name);
+    addNotif({msg:`📤 "${cl.name}" submitted by ${user.name}${approverName?` to ${approverName}`:""}`,time:ts,read:false});
+    showToast("📤 Submitted for Approval!");
+    setShowSubmitModal(false);
+    setTimeout(onSaveClose,700);
+  }
 
   function handleCancelSubmission(){
     if(!confirm("Cancel this submission? The checklist will return to Draft and become editable."))return;
@@ -1292,6 +1404,10 @@ function handleSubmitConfirm({ approverName, approverEmail, remarks, comments })
                     {!editable?h.text:(<span contentEditable suppressContentEditableWarning onBlur={e=>updateHeader(ci,e.target.innerText)} style={{display:"block",outline:"none"}}>{h.text}</span>)}
                   </th>
                 ))}
+                {/* Remark column — always shown, auto-appended after fill columns */}
+                <th style={{background:"#4a3a6b",color:"white",border:"1px solid #d1d5db",padding:"4px 8px",fontSize:10,fontWeight:600,minWidth:160,position:"sticky",top:0,zIndex:10}}>
+                  Remarks / Notes
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -1311,6 +1427,19 @@ function handleSubmitConfirm({ approverName, approverEmail, remarks, comments })
                       </td>
                     );
                   })}
+                  {/* Remark cell — editable input, persisted in row[0].remark (row-level) */}
+                  <td style={{background:!editable?"#f5f0ff":"#faf5ff",border:"1px solid #d8b4fe",padding:"4px 8px",minWidth:160}}>
+                    {!editable
+                      ? <span style={{fontSize:11,color:"#5b21b6",fontStyle:"italic"}}>{row[0]?.remark||""}</span>
+                      : <input
+                          type="text"
+                          value={row[0]?.remark||""}
+                          onChange={e=>updateRowRemark(ri,e.target.value)}
+                          placeholder="Add remark…"
+                          style={{width:"100%",fontSize:11,background:"transparent",border:"none",outline:"none",color:"#5b21b6",fontStyle:"italic"}}
+                        />
+                    }
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1578,21 +1707,19 @@ function CreateModal({ user, onClose, onCreate, prefill }) {
 //  Designed for "Line 1 → Line 2 → Line 3" manufacturing use-case.
 // ═══════════════════════════════════════════════════════
 function CloneModal({ source, user, onClose, onCreate }) {
-  const [name,     setName]     = useState(`${source.name} — Copy`);
+ const [name, setName] = useState(source.name);
   const [dept,     setDept]     = useState(source.department);
   const [shift,    setShift]    = useState(source.shift);
-  const [copyData, setCopyData] = useState(false); // keep filled values?
+  // keep filled values?
 
   function handleClone() {
     if (!name.trim()) return;
     // Build fresh empty rows with same header structure
-    const blankRows = source.tableData.rows.map(row =>
-      row.map(() => ({ value: "" }))
-    );
-    // If user wants to carry data forward, keep existing values
-    const clonedRows = copyData
-      ? source.tableData.rows.map(row => row.map(cell => ({ value: cell.value })))
-      : blankRows;
+   const clonedRows = source.tableData.rows.map(row =>
+  row.map((cell, ci) => ({
+    value: source.tableData.headers[ci]?.isFill ? "" : cell.value,
+  }))
+);
 
     const cl = {
       id:            genId(),
@@ -1677,34 +1804,11 @@ function CloneModal({ source, user, onClose, onCreate }) {
             </div>
           </div>
 
-          {/* Copy data toggle */}
-          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-            <input type="checkbox" id="copyData" checked={copyData} onChange={e => setCopyData(e.target.checked)}
-              className="mt-0.5 accent-[#3D8B6E] w-3.5 h-3.5 flex-shrink-0"/>
-            <label htmlFor="copyData" className="cursor-pointer">
-              <p className="text-xs font-semibold text-amber-800">Carry forward filled values</p>
-              <p className="text-[10px] text-amber-600 mt-0.5">
-                Keep existing data as a starting point. Unchecked = blank template clone.
-              </p>
-            </label>
-          </div>
+          
+          
 
           {/* What's copied info */}
-          <div className="text-[10px] text-[#6B8A78] space-y-1 border-t border-gray-100 pt-3">
-            <p className="font-semibold text-[#1A2E24] mb-1.5">What gets cloned:</p>
-            {[
-              ["✓","All checkpoint column names & structure"],
-              ["✓","All fill column types & positions"],
-              ["✓","Fill type setting: " + source.fillType],
-              ["✓","Row count: " + source.tableData.rows.length],
-              ["✗","Status resets to Draft"],
-              ["✗","Approval history cleared"],
-            ].map(([icon, text]) => (
-              <div key={text} className={`flex items-center gap-1.5 ${icon==="✓"?"text-green-700":"text-gray-400"}`}>
-                <span className="font-bold w-3">{icon}</span> {text}
-              </div>
-            ))}
-          </div>
+          
 
           <div className="flex gap-2 pt-1">
             <button onClick={handleClone}
@@ -1723,77 +1827,207 @@ function CloneModal({ source, user, onClose, onCreate }) {
 }
 
 // ═══════════════════════════════════════════════════════
-//  CHECKLIST PAGE
+//  CHECKLIST PAGE — with advanced filter + sort panel
 // ═══════════════════════════════════════════════════════
 function ChecklistPage({ user, checklists, bookmarks, setChecklists, setBookmarks, addNotif, addAudit, auditLog, showToast, initialAction, setPage }) {
-  const [view,setView]=useState("landing");
-  const [activeCl,setActiveCl]=useState(null);
-  const [isViewMode,setIsViewMode]=useState(false);
-  const [showCreate,setShowCreate]=useState(false);
-  const [prefill,setPrefill]=useState(null);
-  const [cloneTarget,setCloneTarget]=useState(null); // checklist to clone
-  const [tab,setTab]=useState("all");
-  const [freqFilter,setFreqFilter]=useState("");
-  const [search,setSearch]=useState("");
+  const [view,setView]           = useState("landing");
+  const [activeCl,setActiveCl]   = useState(null);
+  const [isViewMode,setIsViewMode]= useState(false);
+  const [showCreate,setShowCreate]= useState(false);
+  const [prefill,setPrefill]     = useState(null);
+  const [cloneTarget,setCloneTarget]=useState(null);
+  const [tab,setTab]             = useState("all");
+  const [showFilters,setShowFilters]=useState(false); // toggle filter panel
+
+  // ── Filter state ──
+  const [search,    setSearch]    = useState("");
+  const [freqFilter,setFreqFilter]= useState("");
+  const [deptFilter,setDeptFilter]= useState("");
+  const [shiftFilter,setShiftFilter]=useState("");
+  const [statusFilter,setStatusFilter]=useState("");
+  const [dateFrom,  setDateFrom]  = useState("");
+  const [dateTo,    setDateTo]    = useState("");
+  const [sortBy,    setSortBy]    = useState("newest"); // newest|oldest|name-az|name-za|status|dept
+
   const actionHandled=useRef(false);
+  const bIds=bookmarks.map(b=>b.id);
 
   useEffect(()=>{
     if(initialAction&&!actionHandled.current){
       actionHandled.current=true;
-      if(initialAction.type==="create")setShowCreate(true);
-      else if(initialAction.type==="fill"&&initialAction.id)openChecklist(initialAction.id,false);
-      else if(initialAction.type==="view"&&initialAction.id)openChecklist(initialAction.id,true);
-      else if(initialAction.type==="clone"&&initialAction.id){
-        const cl=checklists.find(l=>l.id===initialAction.id);
-        if(cl) setCloneTarget(cl);
-      }
-      else if(initialAction.type==="template"&&initialAction.id){const bm=bookmarks.find(b=>b.id===initialAction.id);if(bm){setPrefill(bm);setShowCreate(true);}}
-      else if(initialAction.type==="bookmarks")setTab("bookmarks");
+      if(initialAction.type==="create") setShowCreate(true);
+      else if(initialAction.type==="fill"&&initialAction.id)   openChecklist(initialAction.id,false);
+      else if(initialAction.type==="view"&&initialAction.id)   openChecklist(initialAction.id,true);
+      else if(initialAction.type==="clone"&&initialAction.id){ const cl=checklists.find(l=>l.id===initialAction.id); if(cl) setCloneTarget(cl); }
+      else if(initialAction.type==="template"&&initialAction.id){ const bm=bookmarks.find(b=>b.id===initialAction.id); if(bm){setPrefill(bm);setShowCreate(true);} }
+      else if(initialAction.type==="bookmarks") setTab("bookmarks");
     }
   },[initialAction]);
 
   function openChecklist(id,viewOnly){
-    const cl=checklists.find(l=>l.id===id);
-    if(!cl)return;
-    setActiveCl({...cl});setIsViewMode(viewOnly);setView("editor");
+    const cl=checklists.find(l=>l.id===id); if(!cl)return;
+    setActiveCl({...cl}); setIsViewMode(viewOnly); setView("editor");
   }
   function deleteChecklist(id){
     if(!confirm("Delete?"))return;
     const cl=checklists.find(l=>l.id===id);
     setChecklists(prev=>prev.filter(l=>l.id!==id));
-    addAudit(id,"Deleted",user,`Checklist "${cl?.name}" deleted`,cl?.name);
+    addAudit(id,"Deleted",user,`"${cl?.name}" deleted`,cl?.name);
     showToast("Deleted");
   }
 
-  let filtered=[...checklists].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-  const bIds=bookmarks.map(b=>b.id);
-  if(user.role==="operator")filtered=filtered.filter(l=>l.createdBy===user.name||l.createdById===user.id);
-  if(tab==="bookmarks")filtered=filtered.filter(l=>bIds.includes(l.id));
-  if(freqFilter)filtered=filtered.filter(l=>l.frequency===freqFilter);
-  if(search){const q=search.toLowerCase();filtered=filtered.filter(l=>l.name?.toLowerCase().includes(q)||l.id?.toLowerCase().includes(q)||l.createdBy?.toLowerCase().includes(q)||l.department?.toLowerCase().includes(q));}
+  // ── Filtering logic ──
+  let filtered=[...checklists];
+  if(user.role==="operator") filtered=filtered.filter(l=>l.createdBy===user.name||l.createdById===user.id);
+  if(tab==="bookmarks")      filtered=filtered.filter(l=>bIds.includes(l.id));
+  if(search){
+    const q=search.toLowerCase();
+    filtered=filtered.filter(l=>l.name?.toLowerCase().includes(q)||l.id?.toLowerCase().includes(q)||l.createdBy?.toLowerCase().includes(q)||l.department?.toLowerCase().includes(q));
+  }
+  if(freqFilter)   filtered=filtered.filter(l=>l.frequency===freqFilter);
+  if(deptFilter)   filtered=filtered.filter(l=>l.department===deptFilter);
+  if(shiftFilter)  filtered=filtered.filter(l=>l.shift===shiftFilter);
+  if(statusFilter) filtered=filtered.filter(l=>l.status===statusFilter);
+  if(dateFrom)     filtered=filtered.filter(l=>new Date(l.createdAt)>=new Date(dateFrom));
+  if(dateTo)       filtered=filtered.filter(l=>new Date(l.createdAt)<=new Date(dateTo+"T23:59:59"));
+
+  // ── Sorting ──
+  filtered.sort((a,b)=>{
+    if(sortBy==="newest")  return new Date(b.createdAt)-new Date(a.createdAt);
+    if(sortBy==="oldest")  return new Date(a.createdAt)-new Date(b.createdAt);
+    if(sortBy==="name-az") return (a.name||"").localeCompare(b.name||"");
+    if(sortBy==="name-za") return (b.name||"").localeCompare(a.name||"");
+    if(sortBy==="status")  return (a.status||"").localeCompare(b.status||"");
+    if(sortBy==="dept")    return (a.department||"").localeCompare(b.department||"");
+    return 0;
+  });
+
+  // Count active filters for badge
+  const activeFilterCount = [freqFilter,deptFilter,shiftFilter,statusFilter,dateFrom,dateTo].filter(Boolean).length;
+
+  function clearFilters(){
+    setFreqFilter(""); setDeptFilter(""); setShiftFilter("");
+    setStatusFilter(""); setDateFrom(""); setDateTo(""); setSortBy("newest");
+  }
 
   if(view==="editor"&&activeCl){
-    return(
-      <ChecklistEditor cl={activeCl} viewMode={isViewMode} user={user} auditLog={auditLog}
-        onSaveClose={()=>setView("landing")} onBack={()=>setView("landing")}
-        showToast={showToast} addNotif={addNotif} addAudit={addAudit}
-        bookmarks={bookmarks} setBookmarks={setBookmarks} setChecklists={setChecklists}/>
-    );
+    return <ChecklistEditor cl={activeCl} viewMode={isViewMode} user={user} auditLog={auditLog}
+      onSaveClose={()=>setView("landing")} onBack={()=>setView("landing")}
+      showToast={showToast} addNotif={addNotif} addAudit={addAudit}
+      bookmarks={bookmarks} setBookmarks={setBookmarks} setChecklists={setChecklists}/>;
   }
 
   return (
     <main className="max-w-[1800px] mx-auto p-3 md:p-4">
-      <div className="flex items-center justify-between mb-3"><h2 className="text-base font-bold text-[#1A2E24]">Checklists</h2></div>
-      <div className="flex flex-wrap gap-1.5 mb-3 items-center">
-        {[["all","All"],["bookmarks","📌 Bookmarks"]].map(([t,l])=>(
+      {/* Page header */}
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-bold text-[#1A2E24]">Checklists
+          <span className="ml-2 text-[10px] text-[#6B8A78] font-normal font-mono">{filtered.length} records</span>
+        </h2>
+      </div>
+
+      {/* Tab + search + filter toggle bar */}
+      <div className="flex flex-wrap gap-1.5 mb-2 items-center">
+        {[["all","All"],["bookmarks","Bookmarks"]].map(([t,l])=>(
           <button key={t} onClick={()=>setTab(t)} className={`text-xs px-3 py-1.5 rounded-lg font-semibold transition-all ${tab===t?"bg-[#3D8B6E] text-white":"bg-white border border-gray-200 text-gray-500 hover:border-[#3D8B6E]"}`}>{l}</button>
         ))}
         <div className="flex-1"/>
-        <select value={freqFilter} onChange={e=>setFreqFilter(e.target.value)} className="text-xs px-2 py-1.5 rounded-lg border border-gray-200 outline-none bg-white">
-          <option value="">All Schedules</option>{FREQS.map(f=><option key={f}>{f}</option>)}
+        {/* Search */}
+        <div className="relative">
+          <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name, ID, dept…" className="text-xs pl-7 pr-3 py-1.5 rounded-lg border border-gray-200 outline-none w-48 focus:border-[#3D8B6E]" style={{background:"#f6faf8"}}/>
+        </div>
+        {/* Filter toggle */}
+        <button onClick={()=>setShowFilters(s=>!s)}
+          className={`relative text-xs px-3 py-1.5 rounded-lg border font-semibold flex items-center gap-1.5 transition-all ${showFilters?"bg-[#3D8B6E] text-white border-[#3D8B6E]":"bg-white border-gray-200 text-gray-600 hover:border-[#3D8B6E]"}`}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          Filters
+          {activeFilterCount>0&&<span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[8px] flex items-center justify-center font-bold">{activeFilterCount}</span>}
+        </button>
+        {/* Sort */}
+        <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
+          className="text-xs px-2 py-1.5 rounded-lg border border-gray-200 outline-none bg-white focus:border-[#3D8B6E]">
+          <option value="newest">Sort: Newest</option>
+          <option value="oldest">Sort: Oldest</option>
+          <option value="name-az">Sort: Name A→Z</option>
+          <option value="name-za">Sort: Name Z→A</option>
+          <option value="status">Sort: Status</option>
+          <option value="dept">Sort: Department</option>
         </select>
-        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search…" className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 outline-none w-40"/>
       </div>
+
+      {/* Advanced filter panel — collapsible */}
+      {showFilters&&(
+        <div className="bg-white border border-[#d0e8da] rounded-xl p-4 mb-3 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] font-bold text-[#3D8B6E] uppercase tracking-wide">Advanced Filters</p>
+            {activeFilterCount>0&&(
+              <button onClick={clearFilters} className="text-[10px] text-red-500 hover:text-red-700 font-semibold flex items-center gap-1">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                Clear all ({activeFilterCount})
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {/* Department */}
+            <div>
+              <label className="block text-[9px] font-bold text-[#6B8A78] uppercase mb-1">Department</label>
+              <select value={deptFilter} onChange={e=>setDeptFilter(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#3D8B6E] bg-white">
+                <option value="">All</option>{DEPTS.map(d=><option key={d}>{d}</option>)}
+              </select>
+            </div>
+            {/* Shift */}
+            <div>
+              <label className="block text-[9px] font-bold text-[#6B8A78] uppercase mb-1">Shift</label>
+              <select value={shiftFilter} onChange={e=>setShiftFilter(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#3D8B6E] bg-white">
+                <option value="">All</option>{SHIFTS.map(s=><option key={s}>{s}</option>)}
+              </select>
+            </div>
+            {/* Schedule */}
+            <div>
+              <label className="block text-[9px] font-bold text-[#6B8A78] uppercase mb-1">Schedule</label>
+              <select value={freqFilter} onChange={e=>setFreqFilter(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#3D8B6E] bg-white">
+                <option value="">All</option>{FREQS.map(f=><option key={f}>{f}</option>)}
+              </select>
+            </div>
+            {/* Status */}
+            <div>
+              <label className="block text-[9px] font-bold text-[#6B8A78] uppercase mb-1">Status</label>
+              <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#3D8B6E] bg-white">
+                <option value="">All</option>
+                {Object.entries(STATUS).map(([k,v])=><option key={v} value={v}>{k.charAt(0)+k.slice(1).toLowerCase()}</option>)}
+              </select>
+            </div>
+            {/* Date From */}
+            <div>
+              <label className="block text-[9px] font-bold text-[#6B8A78] uppercase mb-1">Date From</label>
+              <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#3D8B6E]"/>
+            </div>
+            {/* Date To */}
+            <div>
+              <label className="block text-[9px] font-bold text-[#6B8A78] uppercase mb-1">Date To</label>
+              <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#3D8B6E]"/>
+            </div>
+          </div>
+          {/* Active filter chips */}
+          {activeFilterCount>0&&(
+            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
+              {deptFilter&&<span className="bg-[#e8f5ee] text-[#1e5c42] text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">Dept: {deptFilter}<button onClick={()=>setDeptFilter("")} className="hover:text-red-500 ml-0.5">×</button></span>}
+              {shiftFilter&&<span className="bg-[#e8f5ee] text-[#1e5c42] text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">Shift: {shiftFilter}<button onClick={()=>setShiftFilter("")} className="hover:text-red-500 ml-0.5">×</button></span>}
+              {freqFilter&&<span className="bg-[#e8f5ee] text-[#1e5c42] text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">Schedule: {freqFilter}<button onClick={()=>setFreqFilter("")} className="hover:text-red-500 ml-0.5">×</button></span>}
+              {statusFilter&&<span className="bg-[#e8f5ee] text-[#1e5c42] text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">Status: {statusFilter}<button onClick={()=>setStatusFilter("")} className="hover:text-red-500 ml-0.5">×</button></span>}
+              {dateFrom&&<span className="bg-[#e8f5ee] text-[#1e5c42] text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">From: {dateFrom}<button onClick={()=>setDateFrom("")} className="hover:text-red-500 ml-0.5">×</button></span>}
+              {dateTo&&<span className="bg-[#e8f5ee] text-[#1e5c42] text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">To: {dateTo}<button onClick={()=>setDateTo("")} className="hover:text-red-500 ml-0.5">×</button></span>}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {filtered.length===0?(
