@@ -9,6 +9,7 @@ import Toast from "./Toast.jsx";
 export default function App() {
   const [user, setUser] = useState(() => getLS("isLoggedIn", false) ? getLS("currentUser", null) : null);
   const [page, setPage] = useState("dashboard");
+  const [dashKey, setDashKey] = useState(0);
   const [checklistAction, setCA] = useState(null);
   const [checklists, setChecklists] = useState(() => getLS("checklists", []));
   const [bookmarks, setBookmarks] = useState(() => getLS("bookmarkedTemplates", []));
@@ -30,7 +31,7 @@ export default function App() {
   function markAllRead() { setNotifs(prev => prev.map(n => ({ ...n, read: true }))); }
   function handleLogin(u) { setLS("isLoggedIn", true); setLS("currentUser", u); setUser(u); }
   function handleLogout() { localStorage.removeItem("isLoggedIn"); localStorage.removeItem("currentUser"); setUser(null); setPage("dashboard"); }
-  function handleSetPage(p) { setPage(p); if (p !== "checklist") setCA(null); }
+  function handleSetPage(p) { setPage(p); if (p !== "checklist") setCA(null); if (p === "dashboard") setDashKey(k => k + 1); }
 
   if (!user) return (<><LoginPage onLogin={handleLogin}/><Toast msg={toast.msg} show={toast.show}/></>);
 
@@ -42,7 +43,7 @@ export default function App() {
         onMarkAllRead={markAllRead}
         onLogout={handleLogout}/>
       {page === "dashboard" && (
-        <DashboardPage user={user} checklists={checklists} bookmarks={bookmarks}
+        <DashboardPage key={dashKey} user={user} checklists={checklists} bookmarks={bookmarks}
           setChecklists={setChecklists} setBookmarks={setBookmarks}
           addNotif={addNotif} addAudit={addAudit}
           showToast={showToast} setPage={handleSetPage} setChecklistAction={setCA}/>

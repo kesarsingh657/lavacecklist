@@ -17,7 +17,7 @@ export default function Header({ user, page, setPage, notifications, onClearNoti
     <header className="sticky top-0 z-50 bg-[#3D8B6E] border-b border-green-800 shadow-sm no-print">
       <div className="h-14 px-4 md:px-6 flex items-center justify-between gap-2">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 cursor-pointer" onClick={()=>setPage("dashboard")}>
             <div className="w-8 h-8 rounded-lg bg-white text-[#3D8B6E] flex items-center justify-center font-bold text-sm">✓</div>
             <div className="hidden sm:block">
               <h1 className="text-sm font-bold text-white leading-none">Smart Checklist</h1>

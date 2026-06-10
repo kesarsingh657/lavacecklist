@@ -7,13 +7,39 @@ export default function CloneModal({ source, user, onClose, onCreate }) {
   const [dept,     setDept]     = useState(source.department);
   const [shift,    setShift]    = useState(source.shift);
 
+  const isRecurring = ["Daily", "Weekly", "Monthly"].includes(source.frequency);
+
   function handleClone() {
     if (!name.trim()) return;
-    const clonedRows = source.tableData.rows.map(row =>
-      row.map((cell, ci) => ({
-        value: source.tableData.headers[ci]?.isFill ? "" : cell.value,
-      }))
-    );
+
+    let clonedData = {};
+
+    if (isRecurring && source.horizontalStructure) {
+      const hs = source.horizontalStructure;
+      clonedData = {
+        horizontalStructure: {
+          checkpointColumns: hs.checkpointColumns.map(c => ({ ...c })),
+          rows: hs.rows.map(r => ({
+            id: `row-${Math.random().toString(36).slice(2, 7)}`,
+            metaValues: { ...r.metaValues },
+          })),
+          dates: [...hs.dates],
+          matrixData:  {},
+          remarksData: {},
+        },
+      };
+    } else if (!isRecurring && source.tableData) {
+      clonedData = {
+        tableData: {
+          headers: source.tableData.headers.map(h => ({ ...h })),
+          rows: source.tableData.rows.map(row =>
+            row.map((cell, ci) => ({
+              value: source.tableData.headers[ci]?.isFill ? "" : cell.value,
+            }))
+          ),
+        },
+      };
+    }
 
     const cl = {
       id:            genId(),
@@ -32,11 +58,8 @@ export default function CloneModal({ source, user, onClose, onCreate }) {
       status:        STATUS.DRAFT,
       createdAt:     now(),
       clonedFrom:    source.id,
-      tableData: {
-        headers: source.tableData.headers.map(h => ({ ...h })),
-        rows:    clonedRows,
-      },
-      dateEntries: {},
+      dateEntries:   {},
+      ...clonedData,
     };
     onCreate(cl);
   }
@@ -57,7 +80,7 @@ export default function CloneModal({ source, user, onClose, onCreate }) {
             <div className="w-9 h-9 rounded-lg bg-[#3D8B6E] text-white flex items-center justify-center text-base flex-shrink-0">⎘</div>
             <div>
               <p className="text-xs font-bold text-[#1A2E24]">{source.name}</p>
-              <p className="text-[10px] text-[#6B8A78] font-mono">{source.tableData.headers.length} cols · {source.tableData.rows.length} rows · {source.fillType}</p>
+              <p className="text-[10px] text-[#6B8A78] font-mono">{source.tableData?.headers?.length || source.cols} cols · {source.tableData?.rows?.length || source.rows} rows · {source.fillType}</p>
             </div>
           </div>
 

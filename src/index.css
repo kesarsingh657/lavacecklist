@@ -3,72 +3,61 @@
 @tailwind utilities;
 
 *, *::before, *::after { box-sizing: border-box; }
-body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; }
+body { font-family: 'DM Sans', sans-serif; background: #F0F7F3; }
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
+/* Global Matrix UI Scrollbars styling rules */
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #b6d6c8; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #3D8B6E; }
 
-[contenteditable]:focus { outline: 1px solid #3D8B6E; border-radius: 3px; }
+[contenteditable]:focus { outline: 2px solid #3D8B6E; border-radius: 4px; background: #fff !important; }
 
-/* ── PRINT STYLES ────────────────────────── */
-@media print {
-  /* Hide all UI chrome */
-  .no-print, header, nav, .action-bar, .fab-btn, button:not(.print-keep) { display: none !important; }
-
-  body { background: white !important; margin: 0; padding: 0; }
-  .print-area { display: block !important; }
-
-  /* A4 — default */
-  @page { size: A4 portrait; margin: 15mm 15mm 15mm 15mm; }
-  .page-a3 { } /* overridden below */
-}
-
-/* A3 page size override — applied via JS body class */
-body.print-a3 { }
-@page :A3 { size: A3 portrait; margin: 12mm; }
-
-/* Print preview overlay */
-.print-preview-page {
-  
-  width: 210mm;
-  min-height: 297mm;
-  background: white;
-  padding: 15mm;
-  margin: 0 auto;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
-  font-family: 'DM Sans', sans-serif;
-  color: #1A2E24;
-}
-.print-preview-page.a3-page {
-  width: 297mm;
-  min-height: 420mm;
-}
-
-/* Print table styles */
-.print-table {
+/* ── SOLID HIGH-CONTRAST SOLID SEPARATING BORDERS ── */
+table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
   width: 100%;
-  border-collapse: collapse;
-  font-size: 10px;
-  margin-top: 8px;
 }
-.print-table th {
-  background: #3D8B6E;
-  color: white;
-  padding: 6px 8px;
-  text-align: left;
-  font-weight: 600;
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+
+table th, table td {
+  border-right: 1.5px solid #2d3748 !important;
+  border-bottom: 1.5px solid #2d3748 !important;
+  border-left: 0px !important;
+  border-top: 0px !important;
 }
-.print-table th.fill-col { background: #1e5c42; }
-.print-table td {
-  border: 1px solid #d1d5db;
-  padding: 5px 8px;
-  font-size: 10px;
-  vertical-align: middle;
+
+thead tr:first-child th { border-top: 1.5px solid #2d3748 !important; }
+tr td:first-child, tr th:first-child { border-left: 1.5px solid #2d3748 !important; }
+
+/* ── 🟢 AUTO-HEIGHT RESPONSIVE TEXT WRAP SYSTEM ── */
+td.cell-wrap-box, .wrap-container {
+  white-space: pre-wrap !important;       /* Preserves structural line entries but wraps nicely */
+  overflow-wrap: break-word !important;   /* standard text container wraps */
+  word-wrap: break-word !important;       /* legacy browsers fallback configurations code */
+  word-break: break-word !important;      /* Forces text down into the next line instead of shifting box horizontal boundaries */
+  vertical-align: top !important;         /* Lock position to the top edge, tracking clear line heights */
+  height: auto !important;                /* Dynamically shifts row layout tracking bounds downward */
+  min-height: 44px;
 }
-.print-table tr:nth-child(even) td { background: #f9fafb; }
-.print-table tr:nth-child(odd) td { background: white; }
+
+td.cell-wrap-box div, td.cell-wrap-box span {
+  display: block;
+  width: 100%;
+  word-break: break-word !important;
+  white-space: pre-wrap !important;
+}
+
+/* ── COMPLIANCE CHROMATIC OVERRIDES ── */
+td.bg-red-100\/70 input, td.bg-red-100\/70 select, td.bg-red-100\/70 textarea {
+  color: #991b1b !important; font-weight: bold !important; cursor: not-allowed !important; pointer-events: none !important; background-color: transparent !important;
+}
+td.bg-blue-100\/50 input, td.bg-blue-100\/50 select, td.bg-blue-100\/50 textarea {
+  color: #1e40af !important; font-weight: bold !important; cursor: not-allowed !important; pointer-events: none !important; background-color: transparent !important;
+}
+
+@media print {
+  .no-print, header, nav, .action-bar, .fab-btn, button { display: none !important; }
+  body { background: white !important; margin: 0; padding: 0; }
+  table th, table td { border: 2px solid #000000 !important; }
+}
