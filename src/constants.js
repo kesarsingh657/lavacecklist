@@ -1,3 +1,13 @@
+/**
+ * constants.js — MES Enhanced Edition
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CHANGES:
+ *  - Added STATUS.REWORK  ("rework") — checklist sent back after rejection
+ *  - Added STATUS_LABEL entry for rework
+ *  - Added STATUS_CLS entry for rework (orange styling)
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
 export const USERS = {
   admin:    { password:"admin123", role:"admin",    name:"Admin Supervisor" },
   operator: { password:"op123",    role:"operator", name:"Operator"         },
@@ -12,12 +22,12 @@ export const DEMO_ACCOUNTS = [
   { id:"viewer",   pw:"view123",  label:"Read Only"  },
 ];
 
-export const FILL_TYPES = ["Text Input","Number Input","Checkbox","OK / NG","Pass / Fail","Yes / No","Custom Dropdown"];
-export const DEPTS      = ["Production","Quality","Warehouse","Maintenance"];
-export const SHIFTS     = ["Morning","Afternoon","Night"];
-export const FREQS      = ["One Time","Daily","Weekly","Monthly"];
-export const WEEK_DAYS  = ["Su","Mo","Tu","We","Th","Fr","Sa"];
-export const PAPER_SIZES = ["A4","A3"];
+export const FILL_TYPES   = ["Text Input","Number Input","Checkbox","OK / NG","Pass / Fail","Yes / No","Custom Dropdown"];
+export const DEPTS        = ["Production","Quality","Warehouse","Maintenance"];
+export const SHIFTS       = ["Morning","Afternoon","Night"];
+export const FREQS        = ["One Time","Daily","Weekly","Monthly"];
+export const WEEK_DAYS    = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+export const PAPER_SIZES  = ["A4","A3"];
 
 export const STATUS = {
   DRAFT:     "draft",
@@ -27,19 +37,30 @@ export const STATUS = {
   APPROVED:  "approved",
   REJECTED:  "rejected",
   CANCELLED: "cancelled",
+  // NEW: rework status — checklist returned to operator after rejection for fixes
+  REWORK:    "rework",
 };
 
 export const STATUS_LABEL = {
-  draft:"📝 Draft", finalized:" Finalized", submitted:"📤 Submitted",
-  pending:"⏳ Pending Approval", approved:"✅ Approved", rejected:"❌ Rejected", cancelled:"⊘ Cancelled",
+  draft:     "📝 Draft",
+  finalized: "🔒 Finalized",
+  submitted: "📤 Submitted",
+  pending:   "⏳ Pending Approval",
+  approved:  "✅ Approved",
+  rejected:  "❌ Rejected",
+  cancelled: "⊘ Cancelled",
+  // NEW: rework label
+  rework:    "🔄 In Rework",
 };
 
 export const STATUS_CLS = {
-  draft:"bg-gray-100 text-gray-600 border-gray-200",
-  finalized:"bg-amber-100 text-amber-700 border-amber-200",
-  submitted:"bg-blue-100 text-blue-700 border-blue-200",
-  pending:"bg-yellow-100 text-yellow-800 border-yellow-200",
-  approved:"bg-green-100 text-green-700 border-green-200",
-  rejected:"bg-red-100 text-red-700 border-red-200",
-  cancelled:"bg-gray-100 text-gray-500 border-gray-200",
+  draft:     "bg-gray-100 text-gray-600 border-gray-200",
+  finalized: "bg-amber-100 text-amber-700 border-amber-200",
+  submitted: "bg-blue-100 text-blue-700 border-blue-200",
+  pending:   "bg-yellow-100 text-yellow-800 border-yellow-200",
+  approved:  "bg-green-100 text-green-700 border-green-200",
+  rejected:  "bg-red-100 text-red-700 border-red-200",
+  cancelled: "bg-gray-100 text-gray-500 border-gray-200",
+  // NEW: orange for rework — visually distinct from rejected
+  rework:    "bg-orange-100 text-orange-700 border-orange-200",
 };

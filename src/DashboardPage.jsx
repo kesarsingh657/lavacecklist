@@ -134,27 +134,51 @@ export default function DashboardPage({ user, checklists, bookmarks, setChecklis
 
   // ── List row ──────────────────────────────────────────────────────────────
   function ListRow({ l }) {
-    const canFill=PERM.canEdit(l,user); const canAR=PERM.canApproveReject(l,user);
-    const dot = FREQ_META[l.frequency]?.dot || "#9ca3af";
+    const canFill = PERM.canEdit(l, user);
+    const canAR   = PERM.canApproveReject(l, user);
+    const dot     = FREQ_META[l.frequency]?.dot || "#9ca3af";
     return (
-      <div onClick={()=>{setPage("checklist");setChecklistAction({type:canFill?"fill":"view",id:l.id});}} className="flex items-center gap-3 px-4 py-3 border-b border-gray-50 hover:bg-[#f6faf8] cursor-pointer transition-all group">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-50 hover:bg-[#f6faf8] transition-all">
         <span style={{width:8,height:8,borderRadius:"50%",background:dot,flexShrink:0}}/>
-        <div className="flex-1 min-w-0">
+
+        {/* Name + meta — clickable to open */}
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={()=>{setPage("checklist");setChecklistAction({type:canFill?"fill":"view",id:l.id});}}>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[13px] font-semibold text-[#1A2E24] truncate max-w-[240px]">{l.name}</span>
             <MiniStatus status={l.status}/>
-            {bIds.includes(l.id)&&<span className="text-orange-400 text-xs">★</span>}
+            {bIds.includes(l.id) && <span className="text-orange-400 text-xs">★</span>}
           </div>
           <div className="text-[11px] text-[#6B8A78] font-mono mt-0.5">{l.id} · {l.department} · {l.createdBy}</div>
         </div>
-        <div className="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e=>e.stopPropagation()}>
-          {canAR&&<>
-            <button onClick={()=>setApprovalModal({cl:l,type:"approve"})} className="text-[11px] px-2 py-1 rounded bg-green-50 text-green-700 hover:bg-green-600 hover:text-white font-semibold transition-all">Approve</button>
-            <button onClick={()=>setApprovalModal({cl:l,type:"reject"})}  className="text-[11px] px-2 py-1 rounded bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-semibold transition-all">Reject</button>
+
+        {/* Always-visible action buttons */}
+        <div className="flex gap-1 flex-shrink-0 flex-wrap" onClick={e => e.stopPropagation()}>
+          {/* Open / Edit */}
+          <button
+            onClick={() => { setPage("checklist"); setChecklistAction({ type: canFill ? "fill" : "view", id: l.id }); }}
+            className="text-[10px] px-2 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white font-semibold transition-all">
+            {canFill ? "✏️ Edit" : "👁 View"}
+          </button>
+          {/* Clone */}
+          {(user.role === "admin" || user.role === "operator") && (
+            <button
+              onClick={() => { setPage("checklist"); setChecklistAction({ type: "clone", id: l.id }); }}
+              className="text-[10px] px-2 py-1 rounded-lg bg-[#e8f5ee] text-[#1e5c42] hover:bg-[#3D8B6E] hover:text-white font-semibold transition-all">
+              ⎘ Clone
+            </button>
+          )}
+          {/* Approve / Reject */}
+          {canAR && <>
+            <button onClick={() => setApprovalModal({cl:l,type:"approve"})} className="text-[10px] px-2 py-1 rounded-lg bg-green-50 text-green-700 hover:bg-green-600 hover:text-white font-semibold transition-all">✓ Approve</button>
+            <button onClick={() => setApprovalModal({cl:l,type:"reject"})}  className="text-[10px] px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-semibold transition-all">✕ Reject</button>
           </>}
-          {PERM.canPrint(l)&&<button onClick={()=>setPaperModal({cl:l,action:"print"})} className="text-[11px] px-2 py-1 rounded bg-purple-50 text-purple-700 hover:bg-purple-600 hover:text-white font-semibold transition-all">Print</button>}
-          {PERM.canExport(l)&&<button onClick={()=>setPaperModal({cl:l,action:"export"})} className="text-[11px] px-2 py-1 rounded bg-orange-50 text-orange-700 hover:bg-orange-600 hover:text-white font-semibold transition-all">Export</button>}
+          {/* Print */}
+          {PERM.canPrint(l) && (
+            <button onClick={() => setPaperModal({cl:l,action:"print"})} className="text-[10px] px-2 py-1 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-600 hover:text-white font-semibold transition-all">🖨 Print</button>
+          )}
         </div>
+
+        {/* Date/time */}
         <div className="text-[11px] text-gray-400 font-mono flex-shrink-0 hidden sm:block text-right">
           <div>{new Date(l.createdAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short"})}</div>
           <div>{new Date(l.createdAt).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}</div>

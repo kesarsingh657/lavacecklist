@@ -1,14 +1,24 @@
 import React, { useState } from "react";
-import { USERS, DEMO_ACCOUNTS } from "./constants";
+import api from "./api";
 
 export default function LoginPage({ onLogin }) {
   const [id,setId]=useState(""); const [pw,setPw]=useState(""); const [showPw,setShowPw]=useState(false); const [error,setError]=useState("");
   
-  function handleSubmit(e){
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e){
     e.preventDefault();
-    const u=USERS[id.trim()];
-    if(u&&u.password===pw){onLogin({id:id.trim(),role:u.role,name:u.name});}
-    else{setError("Invalid credentials. Try admin / admin123");setTimeout(()=>setError(""),3000);}
+    if (!id.trim() || !pw.trim()) { setError("Please enter username and password"); return; }
+    setLoading(true); setError("");
+    try {
+      const data = await api.auth.login(id.trim(), pw);
+      onLogin(data.user);
+    } catch(err) {
+      setError(err.message || "Invalid credentials");
+      setTimeout(() => setError(""), 3000);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -33,18 +43,8 @@ export default function LoginPage({ onLogin }) {
             </div>
           </div>
           {error&&<p className="text-red-500 text-[11px]">{error}</p>}
-          <button type="submit" className="w-full text-white py-3 rounded-xl font-semibold text-sm" style={{background:"linear-gradient(135deg,#6FAF8F,#2A6B52)"}}>Sign In →</button>
+          <button type="submit" disabled={loading} className="w-full text-white py-3 rounded-xl font-semibold text-sm" style={{background:"linear-gradient(135deg,#6FAF8F,#2A6B52)",opacity:loading?0.7:1}}>{loading?"Signing in…":"Sign In →"}</button>
         </form>
-        <div className="mt-5 rounded-xl p-3 border" style={{background:"#f6faf8",borderColor:"#d0e8da"}}>
-          <p className="text-[10px] font-semibold text-[#6B8A78] mb-2 uppercase tracking-wide">Demo Accounts</p>
-          <div className="grid grid-cols-2 gap-1.5">
-            {DEMO_ACCOUNTS.map(a=>(
-              <button key={a.id} onClick={()=>{setId(a.id);setPw(a.pw);}} className="text-left bg-white rounded-lg px-2 py-1.5 border text-[10px] hover:border-[#6FAF8F] hover:bg-[#e8f5ee] transition-all" style={{borderColor:"#d0e8da"}}>
-                <span className="font-semibold text-[#3D8B6E]">{a.id}</span> / {a.pw}<span className="text-[9px] text-gray-400 block">{a.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );

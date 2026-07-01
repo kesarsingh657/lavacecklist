@@ -5,14 +5,14 @@ import { genId, now } from "./helpers";
 export default function CreateModal({ user, prefill, onClose, onCreate }) {
   const isEditMode = !!prefill;
   const [form, setForm] = useState({
-    name:          prefill ? prefill.name + " (Copy)" : "",
+    name:          prefill ? prefill.name : "",
     createdBy:     prefill?.createdBy || user.name?.split(" ")[0] || "",
     department:    prefill?.department || "Production",
     shift:         prefill?.shift || "Morning",
     frequency:     prefill?.frequency || "One Time",
     weeklyDays:    prefill?.weeklyDays || [],
     rows:          prefill?.rows || 5,
-    cols:          prefill?.cols || 4,
+    cols:          prefill?.cols || 1,
     fillType:      prefill?.fillType || "Text Input",
     customOptions: prefill?.customOptions?.join(", ") || "",
   });
