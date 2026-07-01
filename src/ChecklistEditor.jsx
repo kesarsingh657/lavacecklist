@@ -691,7 +691,12 @@ export default function ChecklistEditor({
                     })}
                     <td style={{padding:"3px 6px",background:"#fafafa",verticalAlign:"top",cursor:"text",borderBottom:"1px solid #e8e8e8"}} onClick={e=>e.currentTarget.querySelector("textarea")?.focus()}>
                      <textarea
-  ...
+  value={cl.horizontalStructure.remarksData[row.id] || ""}
+  disabled={isView}
+  maxLength={100}
+  onChange={e => updateHRowRemark(row.id, e.target.value)}
+  placeholder="Add notes..."
+  rows={2}
   className="w-full bg-transparent border-none outline-none text-[#3b1d8a] italic resize-none leading-relaxed cursor-text"
   style={{
     minHeight: "36px",
