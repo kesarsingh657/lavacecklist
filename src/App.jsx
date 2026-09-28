@@ -30,6 +30,7 @@ import ChecklistPage from "./ChecklistPage.jsx";
 import AuditPage from "./AuditPage.jsx";
 import TemplatesPage from "./TemplatesPage.jsx";
 import Toast from "./Toast.jsx";
+import LavaLogo from "./LavaLogo.jsx";
 
 export default function App() {
   // ── Auth ────────────────────────────────────────────────────────────────
@@ -98,8 +99,10 @@ export default function App() {
       id:                   cl.id,
       name:                 cl.name,
       department:           cl.department,
+      line:                 cl.line,
       shift:                cl.shift,
       frequency:            cl.frequency,
+      hourlyInterval:       cl.hourly_interval || 1,
       fillType:             cl.fill_type,
       customOptions:        cl.custom_options || [],
       status:               cl.status,
@@ -137,8 +140,10 @@ export default function App() {
       name:                 t.name,
       description:          t.description,
       department:           t.department,
+      line:                 t.line,
       shift:                t.shift,
       frequency:            t.frequency,
+      hourlyInterval:       t.hourly_interval || 1,
       fillType:             t.fill_type,
       customOptions:        t.custom_options || [],
       rows:                 t.rows,
@@ -242,16 +247,19 @@ export default function App() {
   );
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "#F0F7F3" }}>
-      <div className="text-center">
-        <div className="w-12 h-12 rounded-2xl bg-[#3D8B6E] text-white flex items-center justify-center text-2xl mx-auto mb-4">✓</div>
-        <p className="text-[#3D8B6E] font-semibold text-sm">Loading your data…</p>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: "#F5F6FA" }}>
+      <div className="text-center animate-fade-up">
+        <div className="flex justify-center mb-5"><LavaLogo height={30}/></div>
+        <div className="w-40 h-1 mx-auto rounded-full overflow-hidden bg-lava-100">
+          <div className="h-full w-1/2 rounded-full bg-lava-grad animate-shimmer" style={{ backgroundSize: "200% 100%" }}/>
+        </div>
+        <p className="text-muted font-medium text-xs mt-4">Loading your data…</p>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen" style={{ background: "#F0F7F3", fontFamily: "DM Sans, sans-serif" }}>
+    <div className="min-h-screen" style={{ fontFamily: "DM Sans, sans-serif" }}>
       <Header
         user={user} page={page} setPage={handleSetPage}
         notifications={notifications}

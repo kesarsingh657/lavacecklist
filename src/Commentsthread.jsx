@@ -68,11 +68,11 @@ export default function CommentsThread({ cl, user, onAddComment, isView }) {
   return (
     <div className="bg-white border border-gray-100 rounded-2xl shadow-sm mt-3 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-[#f6faf8]">
-        <span className="text-[11px] font-bold text-[#1A2E24] flex items-center gap-1.5">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-[#fafafc]">
+        <span className="text-[11px] font-bold text-[#14141B] flex items-center gap-1.5">
           💬 Comments &amp; Discussion
         </span>
-        <span className="text-[10px] text-[#6B8A78] font-mono">{comments.length} message{comments.length !== 1 ? "s" : ""}</span>
+        <span className="text-[10px] text-[#7A7A8C] font-mono">{comments.length} message{comments.length !== 1 ? "s" : ""}</span>
       </div>
 
       {/* Thread body */}
@@ -85,21 +85,21 @@ export default function CommentsThread({ cl, user, onAddComment, isView }) {
         {comments.map(c => (
           <div key={c.id} className={`flex gap-2.5 ${c.authorId === user.id ? "flex-row-reverse" : ""}`}>
             {/* Avatar */}
-            <div className="w-7 h-7 rounded-full bg-[#3D8B6E] text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+            <div className="w-7 h-7 rounded-full bg-[#FF0047] text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">
               {(c.authorName || "?")[0].toUpperCase()}
             </div>
             {/* Bubble */}
             <div className={`max-w-[70%] ${c.authorId === user.id ? "items-end" : "items-start"} flex flex-col gap-0.5`}>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-semibold text-[#1A2E24]">{c.authorName}</span>
+                <span className="text-[10px] font-semibold text-[#14141B]">{c.authorName}</span>
                 <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full capitalize ${ROLE_CLS[c.role] || ROLE_CLS.viewer}`}>
                   {c.role}
                 </span>
               </div>
               <div className={`px-3 py-2 rounded-xl text-[11px] leading-relaxed ${
                 c.authorId === user.id
-                  ? "bg-[#3D8B6E] text-white rounded-tr-none"
-                  : "bg-gray-100 text-[#1A2E24] rounded-tl-none"
+                  ? "bg-[#FF0047] text-white rounded-tr-none"
+                  : "bg-gray-100 text-[#14141B] rounded-tl-none"
               }`}>
                 {c.text}
               </div>
@@ -121,7 +121,7 @@ export default function CommentsThread({ cl, user, onAddComment, isView }) {
             placeholder="Write a comment… (Ctrl+Enter to send)"
             maxLength={500}
             rows={2}
-            className="w-full text-[11px] border border-gray-200 rounded-xl px-3 py-2 resize-none outline-none focus:border-[#3D8B6E] bg-white"
+            className="w-full text-[11px] border border-gray-200 rounded-xl px-3 py-2 resize-none outline-none focus:border-[#FF0047] bg-white"
           />
           <div className="flex items-center justify-between mt-1.5">
             <span className="text-[9px] text-gray-400 font-mono">{text.length}/500</span>
@@ -129,7 +129,7 @@ export default function CommentsThread({ cl, user, onAddComment, isView }) {
               {err && <span className="text-[10px] text-red-500 font-semibold">{err}</span>}
               <button
                 onClick={handlePost}
-                className="px-3 py-1.5 bg-[#3D8B6E] hover:bg-[#2A6B52] text-white text-[11px] font-bold rounded-lg transition-all"
+                className="px-3 py-1.5 bg-[#FF0047] hover:bg-[#D10039] text-white text-[11px] font-bold rounded-lg transition-all"
               >
                 Send
               </button>

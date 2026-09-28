@@ -43,15 +43,24 @@ class ChecklistStatus(str, enum.Enum):
 
 class Frequency(str, enum.Enum):
     one_time = "One Time"
+    hourly   = "Hourly"
     daily    = "Daily"
     weekly   = "Weekly"
     monthly  = "Monthly"
 
 class Department(str, enum.Enum):
-    production  = "Production"
-    quality     = "Quality"
-    warehouse   = "Warehouse"
-    maintenance = "Maintenance"
+    smt                 = "SMT"
+    assembly            = "Assembly"
+    testing             = "Testing"
+    packing             = "Packing"
+    quality_assurance   = "Quality Assurance"
+    incoming_quality    = "Incoming Quality"
+    store_warehouse     = "Store & Warehouse"
+    maintenance         = "Maintenance"
+    production_planning = "Production Planning"
+    repair_rework       = "Repair & Rework"
+    dispatch_logistics  = "Dispatch & Logistics"
+    ehs_facility        = "EHS & Facility"
 
 class Shift(str, enum.Enum):
     morning   = "Morning"
@@ -91,8 +100,10 @@ class Checklist(Base):
     id             = Column(String(20),  primary_key=True)      # e.g. "CHK-12345"
     name           = Column(String(200), nullable=False)
     department     = Column(Enum(Department), nullable=False)
+    line           = Column(String(50), nullable=True)          # shop-floor line, e.g. "Line 3"
     shift          = Column(Enum(Shift),      nullable=False)
     frequency      = Column(Enum(Frequency),  default=Frequency.one_time)
+    hourly_interval = Column(Integer, default=1)                # hours between checklist slots
     fill_type      = Column(String(50),  default="Text Input")
     custom_options = Column(Text, default="[]")                 # JSON array stored as text
     status         = Column(Enum(ChecklistStatus), default=ChecklistStatus.draft)
@@ -171,8 +182,10 @@ class ChecklistTemplate(Base):
     name           = Column(String(200), nullable=False)
     description    = Column(Text,        nullable=True)
     department     = Column(Enum(Department), nullable=True)
+    line           = Column(String(50), nullable=True)
     shift          = Column(Enum(Shift),      nullable=True)
     frequency      = Column(Enum(Frequency),  default=Frequency.one_time)
+    hourly_interval = Column(Integer, default=1)
     fill_type      = Column(String(50),  default="Text Input")
     custom_options = Column(Text,        default="[]")
     rows           = Column(Integer,     default=5)

@@ -76,8 +76,10 @@ export default function TemplatesPage({ user, templates, setTemplates, checklist
       name:        cl.name + " (Template)",
       description: "",
       department:  cl.department,
+      line:        cl.line,
       shift:       cl.shift,
       frequency:   cl.frequency,
+      hourlyInterval: cl.hourlyInterval || 1,
       fillType:    cl.fillType,
       customOptions: cl.customOptions || [],
       rows:        cl.rows,
@@ -129,13 +131,13 @@ export default function TemplatesPage({ user, templates, setTemplates, checklist
       {/* Header */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div>
-          <h2 className="text-base font-bold text-[#1A2E24]">📁 Templates Library</h2>
-          <p className="text-[10px] text-[#6B8A78] mt-0.5">Reusable checklist structures. No fill data — just the skeleton.</p>
+          <h2 className="text-base font-bold text-[#14141B]">📁 Templates Library</h2>
+          <p className="text-[10px] text-[#7A7A8C] mt-0.5">Reusable checklist structures. No fill data — just the skeleton.</p>
         </div>
         {(user.role === "admin" || user.role === "operator") && (
           <button
             onClick={() => setShowCreate(true)}
-            className="bg-[#3D8B6E] hover:bg-[#2A6B52] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all"
+            className="bg-[#FF0047] hover:bg-[#D10039] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all"
           >
             + New Template
           </button>
@@ -147,7 +149,7 @@ export default function TemplatesPage({ user, templates, setTemplates, checklist
         <input
           value={search} onChange={e => setSearch(e.target.value)}
           placeholder="🔍 Search templates…"
-          className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 outline-none w-44 focus:border-[#3D8B6E]"
+          className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 outline-none w-44 focus:border-[#FF0047]"
         />
         <select value={freqFilter} onChange={e => setFreqFilter(e.target.value)} className="text-xs px-2 py-1.5 rounded-lg border border-gray-200 outline-none bg-white">
           <option value="">All Schedules</option>
@@ -172,12 +174,12 @@ export default function TemplatesPage({ user, templates, setTemplates, checklist
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {visible.map(tpl => (
-            <div key={tpl.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-[#3D8B6E]/30 transition-all">
+            <div key={tpl.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-[#FF0047]/30 transition-all">
               {/* Top row */}
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-bold text-[#1A2E24] truncate">{tpl.name}</p>
-                  {tpl.description && <p className="text-[10px] text-[#6B8A78] mt-0.5 line-clamp-2">{tpl.description}</p>}
+                  <p className="text-[13px] font-bold text-[#14141B] truncate">{tpl.name}</p>
+                  {tpl.description && <p className="text-[10px] text-[#7A7A8C] mt-0.5 line-clamp-2">{tpl.description}</p>}
                 </div>
                 <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ml-2 flex-shrink-0 ${FREQ_CLS[tpl.frequency] || FREQ_CLS["One Time"]}`}>
                   {tpl.frequency}
@@ -185,7 +187,7 @@ export default function TemplatesPage({ user, templates, setTemplates, checklist
               </div>
 
               {/* Meta */}
-              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-[#6B8A78] mb-3">
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-[#7A7A8C] mb-3">
                 <span>🏭 {tpl.department}</span>
                 <span>🕐 {tpl.shift}</span>
                 <span>📝 {tpl.fillType}</span>
@@ -193,7 +195,7 @@ export default function TemplatesPage({ user, templates, setTemplates, checklist
               </div>
 
               {/* Structure summary */}
-              <div className="bg-[#f6faf8] rounded-lg px-2.5 py-1.5 text-[10px] text-[#6B8A78] mb-3 font-mono">
+              <div className="bg-[#fafafc] rounded-lg px-2.5 py-1.5 text-[10px] text-[#7A7A8C] mb-3 font-mono">
                 {tpl.horizontalStructure
                   ? `${tpl.horizontalStructure.rows?.length || 0} rows · ${tpl.horizontalStructure.checkpointColumns?.length || 0} left cols`
                   : `${tpl.tableData?.headers?.length || 0} cols · ${tpl.tableData?.rows?.length || 0} rows`
@@ -205,7 +207,7 @@ export default function TemplatesPage({ user, templates, setTemplates, checklist
               <div className="flex gap-2">
                 <button
                   onClick={() => useTemplate(tpl)}
-                  className="flex-1 py-2 bg-[#3D8B6E] hover:bg-[#2A6B52] text-white text-[11px] font-bold rounded-xl transition-all"
+                  className="flex-1 py-2 bg-[#FF0047] hover:bg-[#D10039] text-white text-[11px] font-bold rounded-xl transition-all"
                 >
                   Use Template
                 </button>
@@ -249,8 +251,10 @@ export function SaveAsTemplateButton({ cl, user, templates, setTemplates, showTo
       name:        cl.name,
       description: "",
       department:  cl.department,
+      line:        cl.line,
       shift:       cl.shift,
       frequency:   cl.frequency,
+      hourlyInterval: cl.hourlyInterval || 1,
       fillType:    cl.fillType,
       customOptions: cl.customOptions || [],
       rows:        cl.rows,
@@ -283,7 +287,7 @@ export function SaveAsTemplateButton({ cl, user, templates, setTemplates, showTo
     <button
       onClick={save}
       className={`text-[10px] px-2.5 py-1.5 rounded-lg font-bold transition-all ${
-        alreadySaved ? "bg-gray-100 text-gray-400 cursor-default" : "bg-[#e8f5ee] text-[#3D8B6E] hover:bg-[#3D8B6E] hover:text-white"
+        alreadySaved ? "bg-gray-100 text-gray-400 cursor-default" : "bg-[#fff1f4] text-[#FF0047] hover:bg-[#FF0047] hover:text-white"
       }`}
     >
       {alreadySaved ? "📁 Saved" : "📁 Save as Template"}

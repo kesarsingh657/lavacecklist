@@ -68,6 +68,7 @@ def checklist_to_out(cl: models.Checklist) -> dict:
 @router.get("/", response_model=List[schemas.ChecklistOut])
 def list_checklists(
     department: Optional[str] = Query(None),
+    line:       Optional[str] = Query(None),
     status:     Optional[str] = Query(None),
     frequency:  Optional[str] = Query(None),
     shift:      Optional[str] = Query(None),
@@ -87,6 +88,7 @@ def list_checklists(
 
     # Apply filters
     if department: query = query.filter(models.Checklist.department == department)
+    if line:       query = query.filter(models.Checklist.line       == line)
     if status:     query = query.filter(models.Checklist.status     == status)
     if frequency:  query = query.filter(models.Checklist.frequency  == frequency)
     if shift:      query = query.filter(models.Checklist.shift      == shift)
@@ -135,8 +137,10 @@ def create_checklist(
         id                   = data.id,
         name                 = data.name,
         department           = data.department,
+        line                 = data.line,
         shift                = data.shift,
         frequency            = data.frequency,
+        hourly_interval      = data.hourly_interval,
         fill_type            = data.fill_type,
         custom_options       = json.dumps(data.custom_options),
         rows                 = data.rows,

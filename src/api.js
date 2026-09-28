@@ -150,6 +150,7 @@ export const checklists = {
   async list(filters = {}) {
     const params = new URLSearchParams();
     if (filters.department) params.set("department", filters.department);
+    if (filters.line)       params.set("line",       filters.line);
     if (filters.status)     params.set("status",     filters.status);
     if (filters.frequency)  params.set("frequency",  filters.frequency);
     if (filters.shift)      params.set("shift",      filters.shift);
@@ -176,8 +177,10 @@ export const checklists = {
       id:                   data.id,
       name:                 data.name,
       department:           data.department,
+      line:                 data.line || null,
       shift:                data.shift,
       frequency:            data.frequency,
+      hourly_interval:      data.hourlyInterval || 1,
       fill_type:            data.fillType,
       custom_options:       data.customOptions || [],
       rows:                 data.rows,
@@ -294,8 +297,10 @@ export const templates = {
       name:                 template.name,
       description:          template.description || "",
       department:           template.department,
+      line:                 template.line || null,
       shift:                template.shift,
       frequency:            template.frequency,
+      hourly_interval:      template.hourlyInterval || 1,
       fill_type:            template.fillType,
       custom_options:       template.customOptions || [],
       rows:                 template.rows,

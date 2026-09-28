@@ -39,7 +39,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import React, { useState, useEffect, useRef } from "react";
-import { STATUS } from "./constants";
+import { STATUS, hourSlots } from "./constants";
 import { PERM, now, validateFillColumns } from "./helpers";
 import { WorkflowStepper } from "./StatusPill";
 import FillField from "./FillField";
@@ -75,7 +75,13 @@ export default function ChecklistEditor({
     return `${months[d.getMonth()]}-${d.getFullYear()}`;
   };
 
-  const isRecurring = ["Daily", "Weekly", "Monthly"].includes(initialCl.frequency);
+  const isRecurring = ["Hourly", "Daily", "Weekly", "Monthly"].includes(initialCl.frequency);
+  const isHourly    = initialCl.frequency === "Hourly";
+
+  // Hourly columns are "YYYY-MM-DD HH:00" — one per hour slot of the shift
+  const hourlyColumns = (dayStr, shift, interval) =>
+    hourSlots(shift, interval).map(h => `${dayStr} ${h}`);
+  const colLabel = dStr => (isHourly ? dStr.split(" ")[1] : dStr);
 
   // ── State initialiser: builds horizontalStructure / tableData if missing ─
   const [cl, setCl] = useState(() => {
@@ -89,7 +95,10 @@ export default function ChecklistEditor({
       const month     = baseDate.getMonth();
       const dates     = [];
 
-      if (freq === "Daily") {
+      if (freq === "Hourly") {
+        // One column per hour slot of the shift, for the creation day
+        dates.push(...hourlyColumns(baseDate.toISOString().split("T")[0], c.shift, c.hourlyInterval));
+      } else if (freq === "Daily") {
         // Generate all days in the creation month
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         for (let d = 1; d <= daysInMonth; d++) {
@@ -119,6 +128,19 @@ export default function ChecklistEditor({
       }));
 
       c.horizontalStructure = { checkpointColumns: cpCols, rows, dates, matrixData: {}, remarksData: {} };
+    }
+
+    // ── AUTO-RESET: append today's hour slots when an Hourly checklist ages ──
+    if (isHourly && c.horizontalStructure) {
+      const slots   = hourlyColumns(getTodayString(), c.shift, c.hourlyInterval);
+      const existing = new Set(c.horizontalStructure.dates);
+      const missing = slots.filter(s => !existing.has(s));
+      if (missing.length) {
+        c.horizontalStructure = {
+          ...c.horizontalStructure,
+          dates: [...c.horizontalStructure.dates, ...missing].sort(),
+        };
+      }
     }
 
     // ── AUTO-RESET: append new month's dates if Daily checklist has aged ──
@@ -198,6 +220,16 @@ export default function ChecklistEditor({
   // ── Timeline lock for recurring cells ───────────────────────────────────
   function getTimelineLockContext(dateHeaderStr) {
     if (!isRecurring) return { type: "present", editable: true };
+    if (cl.frequency === "Hourly") {
+      const [day, hhmm] = dateHeaderStr.split(" ");
+      const start = new Date(`${day}T${hhmm}:00`);
+      const end   = new Date(start.getTime() + (parseInt(cl.hourlyInterval, 10) || 1) * 3600000);
+      const nowTs = new Date();
+      if (nowTs >= start && nowTs < end) return { type: "present", editable: true  };
+      if (nowTs <  start)                return { type: "future",  editable: false };
+      return { type: "past", editable: false };
+    }
+
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const year  = today.getFullYear();
 
@@ -492,7 +524,7 @@ export default function ChecklistEditor({
       {/* ── Title bar ── */}
       <div className="flex items-center justify-between flex-wrap gap-2 mb-3 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
         <div>
-          <h2 className="text-base font-bold text-[#1A2E24]">{cl.name}</h2>
+          <h2 className="text-base font-bold text-[#14141B]">{cl.name}</h2>
           <p className="text-[10px] text-gray-500 font-mono mt-0.5">
             {cl.frequency || "One Time"} · {autoSaveStatus}
             {/* Show rework count if checklist has been reworked before */}
@@ -531,7 +563,7 @@ export default function ChecklistEditor({
             {isRecurring ? (
               // Recurring grid controls
               <>
-                <button onClick={addHRow}           className="text-[10px] px-2.5 py-1.5 rounded-lg bg-[#e8f5ee] text-[#3D8B6E] font-bold">➕ Row</button>
+                <button onClick={addHRow}           className="text-[10px] px-2.5 py-1.5 rounded-lg bg-[#fff1f4] text-[#FF0047] font-bold">➕ Row</button>
                 <button onClick={removeHRow}         className="text-[10px] px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 font-bold">➖ Row</button>
                 <button onClick={addLeftHeadingCol}  className="text-[10px] px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-bold">➕ Col</button>
                 <button onClick={removeLeftHeadingCol} className="text-[10px] px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 font-bold">➖ Col</button>
@@ -539,11 +571,11 @@ export default function ChecklistEditor({
             ) : (
               // One-Time grid controls
               <>
-                <button onClick={addRow}            className="text-[10px] px-2.5 py-1.5 rounded-lg bg-[#e8f5ee] text-[#3D8B6E] font-bold">+ Row</button>
+                <button onClick={addRow}            className="text-[10px] px-2.5 py-1.5 rounded-lg bg-[#fff1f4] text-[#FF0047] font-bold">+ Row</button>
                 <button onClick={removeRow}          className="text-[10px] px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 font-bold">- Row</button>
                 <button onClick={addCheckpointCol}   className="text-[10px] px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-bold">+ Col</button>
                 <button onClick={removeCheckpointCol} className="text-[10px] px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 font-bold">- Col</button>
-                <button onClick={addFillCol}          className="text-[10px] px-2.5 py-1.5 rounded-lg bg-[#1e5c42] text-white font-bold">+ Fill</button>
+                <button onClick={addFillCol}          className="text-[10px] px-2.5 py-1.5 rounded-lg bg-[#FF0047] text-white font-bold">+ Fill</button>
                 <button onClick={removeFillCol}       className="text-[10px] px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 font-bold">- Fill</button>
               </>
             )}
@@ -567,7 +599,7 @@ export default function ChecklistEditor({
             {/* Hidden file input */}
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
 
-            <button onClick={() => saveManual(true)} className="text-[10px] px-2.5 py-1.5 rounded-lg bg-[#3D8B6E] text-white font-bold">Save & Close</button>
+            <button onClick={() => saveManual(true)} className="text-[10px] px-2.5 py-1.5 rounded-lg bg-[#FF0047] text-white font-bold">Save & Close</button>
           </>
         )}
 
@@ -648,7 +680,7 @@ export default function ChecklistEditor({
                     if (lock.type==="future")  badge = "bg-[#f4f4f4] text-[#6f6f6f] font-medium";
                     return (
                       <th key={dStr} style={{ padding:"3px 4px", width:"100px", textAlign:"center", position:"sticky", top:0, zIndex:10, background:"#f4f4f4", borderBottom:"2px solid #e0e0e0" }}>
-                        <div className={`text-[11px] px-2 py-1 rounded font-mono font-semibold ${badge}`}>{dStr}</div>
+                        <div className={`text-[11px] px-2 py-1 rounded font-mono font-semibold ${badge}`}>{colLabel(dStr)}</div>
                       </th>
                     );
                   })}

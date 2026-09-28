@@ -199,9 +199,9 @@ export default function ChecklistPage({
   return (
     <main className="max-w-[1800px] mx-auto p-3 md:p-4">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-base font-bold text-[#1A2E24]">
+        <h2 className="text-base font-bold text-[#14141B]">
           Checklists
-          <span className="ml-2 text-[10px] text-[#6B8A78] font-normal font-mono">{filtered.length} records</span>
+          <span className="ml-2 text-[10px] text-[#7A7A8C] font-normal font-mono">{filtered.length} records</span>
         </h2>
       </div>
 
@@ -232,21 +232,21 @@ export default function ChecklistPage({
       {/* Tabs + Search + Filters row */}
       <div className="flex flex-wrap gap-1.5 mb-2 items-center">
         {[["all","All"],["bookmarks","Bookmarks"]].map(([t,l]) => (
-          <button key={t} onClick={() => setTab(t)} className={`text-xs px-3 py-1.5 rounded-lg font-semibold transition-all ${tab===t?"bg-[#3D8B6E] text-white":"bg-white border border-gray-200 text-gray-500 hover:border-[#3D8B6E]"}`}>{l}</button>
+          <button key={t} onClick={() => setTab(t)} className={`text-xs px-3 py-1.5 rounded-lg font-semibold transition-all ${tab===t?"bg-[#FF0047] text-white":"bg-white border border-gray-200 text-gray-500 hover:border-[#FF0047]"}`}>{l}</button>
         ))}
         <div className="flex-1"/>
         <div className="relative">
           <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…" className="pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg outline-none w-40 focus:border-[#3D8B6E]"/>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…" className="pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg outline-none w-40 focus:border-[#FF0047]"/>
         </div>
         <select value={sortBy} onChange={e=>setSortBy(e.target.value)} className="text-xs px-2 py-1.5 rounded-lg border border-gray-200 outline-none bg-white">
           <option value="newest">Newest</option><option value="oldest">Oldest</option>
           <option value="name-az">A→Z</option><option value="name-za">Z→A</option>
           <option value="status">Status</option><option value="dept">Dept</option>
         </select>
-        <button onClick={()=>setShowFilters(f=>!f)} className={`text-xs px-2.5 py-1.5 rounded-lg border flex items-center gap-1 ${activeFilterCount>0?"border-[#3D8B6E] bg-[#e8f5ee] text-[#3D8B6E]":"border-gray-200 bg-white text-gray-500 hover:border-[#3D8B6E]"}`}>
+        <button onClick={()=>setShowFilters(f=>!f)} className={`text-xs px-2.5 py-1.5 rounded-lg border flex items-center gap-1 ${activeFilterCount>0?"border-[#FF0047] bg-[#fff1f4] text-[#FF0047]":"border-gray-200 bg-white text-gray-500 hover:border-[#FF0047]"}`}>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-          Filters {activeFilterCount>0&&<span className="bg-[#3D8B6E] text-white text-[8px] rounded-full w-4 h-4 flex items-center justify-center font-bold">{activeFilterCount}</span>}
+          Filters {activeFilterCount>0&&<span className="bg-[#FF0047] text-white text-[8px] rounded-full w-4 h-4 flex items-center justify-center font-bold">{activeFilterCount}</span>}
         </button>
       </div>
 
@@ -260,15 +260,15 @@ export default function ChecklistPage({
               [shiftFilter,setShiftFilter,"Shift",SHIFTS],
             ].map(([val,set,label,opts])=>(
               <div key={label}>
-                <label className="block text-[9px] font-bold text-[#6B8A78] uppercase mb-1">{label}</label>
-                <select value={val} onChange={e=>set(e.target.value)} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#3D8B6E] bg-white">
+                <label className="block text-[9px] font-bold text-[#7A7A8C] uppercase mb-1">{label}</label>
+                <select value={val} onChange={e=>set(e.target.value)} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#FF0047] bg-white">
                   <option value="">All</option>{opts.map(o=><option key={o}>{o}</option>)}
                 </select>
               </div>
             ))}
             <div>
-              <label className="block text-[9px] font-bold text-[#6B8A78] uppercase mb-1">Status</label>
-              <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#3D8B6E] bg-white">
+              <label className="block text-[9px] font-bold text-[#7A7A8C] uppercase mb-1">Status</label>
+              <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#FF0047] bg-white">
                 <option value="">All</option>
                 {Object.entries(STATUS).map(([k,v])=><option key={v} value={v}>{k.charAt(0)+k.slice(1).toLowerCase()}</option>)}
               </select>
@@ -287,9 +287,9 @@ export default function ChecklistPage({
               type="checkbox"
               checked={allSelected}
               onChange={() => toggleSelectAll(visibleIds)}
-              className="w-3.5 h-3.5 accent-[#3D8B6E] cursor-pointer"
+              className="w-3.5 h-3.5 accent-[#FF0047] cursor-pointer"
             />
-            <span className="text-[10px] text-[#6B8A78] font-semibold">Select All</span>
+            <span className="text-[10px] text-[#7A7A8C] font-semibold">Select All</span>
           </div>
         )}
 
@@ -309,7 +309,7 @@ export default function ChecklistPage({
             <div
               key={cl.id}
               onClick={() => openChecklist(cl.id, !canFill)}
-              className={`flex items-center gap-3 px-4 py-3 border-b border-gray-50 hover:bg-green-50/50 cursor-pointer border-l-4 ${
+              className={`flex items-center gap-3 px-4 py-3 border-b border-gray-50 hover:bg-lava-50/60 cursor-pointer border-l-4 ${
                 overdue ? "border-l-red-500 bg-red-50/30" :
                 cl.frequency==="Daily"   ? "border-l-blue-400"   :
                 cl.frequency==="Weekly"  ? "border-l-purple-400" :
@@ -319,15 +319,15 @@ export default function ChecklistPage({
               {/* Bulk select checkbox */}
               {(user.role === "admin" || user.role === "operator") && (
                 <div onClick={e => { e.stopPropagation(); toggleSelect(cl.id); }}>
-                  <input type="checkbox" checked={isSelected} onChange={()=>{}} className="w-3.5 h-3.5 accent-[#3D8B6E] cursor-pointer"/>
+                  <input type="checkbox" checked={isSelected} onChange={()=>{}} className="w-3.5 h-3.5 accent-[#FF0047] cursor-pointer"/>
                 </div>
               )}
 
-              <div className="w-9 h-9 rounded-xl bg-[#e8f5ee] flex items-center justify-center flex-shrink-0 text-sm">📋</div>
+              <div className="w-9 h-9 rounded-xl bg-[#fff1f4] flex items-center justify-center flex-shrink-0 text-sm">📋</div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-bold text-[#1A2E24] truncate">{cl.name}</span>
+                  <span className="text-xs font-bold text-[#14141B] truncate">{cl.name}</span>
                   <FreqPill freq={cl.frequency}/>
                   <StatusPill status={cl.status}/>
                   {/* OVERDUE BADGE */}
@@ -341,14 +341,14 @@ export default function ChecklistPage({
                   {isBookmarked && <span className="text-orange-400 text-xs">🔖</span>}
                   {/* Comment count badge */}
                   {cl.comments?.length > 0 && (
-                    <span className="text-[8px] text-[#6B8A78] font-mono">💬 {cl.comments.length}</span>
+                    <span className="text-[8px] text-[#7A7A8C] font-mono">💬 {cl.comments.length}</span>
                   )}
                   {/* Attachment count badge */}
                   {cl.attachments?.length > 0 && (
-                    <span className="text-[8px] text-[#6B8A78] font-mono">📎 {cl.attachments.length}</span>
+                    <span className="text-[8px] text-[#7A7A8C] font-mono">📎 {cl.attachments.length}</span>
                   )}
                 </div>
-                <div className="text-[10px] text-[#6B8A78] font-mono mt-0.5">
+                <div className="text-[10px] text-[#7A7A8C] font-mono mt-0.5">
                   {cl.id} · {cl.department} · {cl.shift} · {cl.createdBy}
                 </div>
                 {cl.rejectionReason && (
@@ -356,7 +356,7 @@ export default function ChecklistPage({
                 )}
               </div>
 
-              <div className="text-[10px] text-[#6B8A78] font-mono text-right hidden sm:block flex-shrink-0">
+              <div className="text-[10px] text-[#7A7A8C] font-mono text-right hidden sm:block flex-shrink-0">
                 {dt.toLocaleDateString("en-IN",{day:"2-digit",month:"short"})}
                 <br/>{dt.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}
               </div>
@@ -412,7 +412,7 @@ export default function ChecklistPage({
                 {/* CLONE */}
                 {(user.role === "admin" || user.role === "operator") && (
                   <button onClick={() => setCloneTarget(cl)}
-                    className="px-2 py-1 rounded-lg bg-[#e8f5ee] text-[#1e5c42] hover:bg-[#3D8B6E] hover:text-white text-[10px] font-semibold transition-all">
+                    className="px-2 py-1 rounded-lg bg-[#fff1f4] text-[#FF0047] hover:bg-[#FF0047] hover:text-white text-[10px] font-semibold transition-all">
                     ⎘ Clone
                   </button>
                 )}
@@ -438,7 +438,7 @@ export default function ChecklistPage({
 
       {/* FAB */}
       {(user.role==="admin"||user.role==="operator") && (
-        <button onClick={()=>{setPrefill(null);setShowCreate(true);}} className="fab-btn fixed bottom-6 right-6 w-12 h-12 rounded-full bg-[#3D8B6E] text-white shadow-xl flex items-center justify-center text-xl hover:bg-[#2A6B52] hover:scale-105 transition-all z-40">+</button>
+        <button onClick={()=>{setPrefill(null);setShowCreate(true);}} className="fab-btn fixed bottom-6 right-6 w-12 h-12 rounded-full bg-[#FF0047] text-white shadow-xl flex items-center justify-center text-xl hover:bg-[#D10039] hover:scale-105 transition-all z-40">+</button>
       )}
 
       {showCreate && (

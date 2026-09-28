@@ -87,7 +87,7 @@ export default function CalendarModal({ cl, calViewDate, setCalViewDate, calSele
           <button
             disabled={!calSelected}
             onClick={onOpen}
-            className={`flex-1 py-2 rounded-xl text-[10px] font-bold text-white transition-all ${calSelected ? "bg-[#3D8B6E] hover:bg-[#2A6B52] shadow-sm" : "bg-gray-300 cursor-not-allowed"}`}
+            className={`flex-1 py-2 rounded-xl text-[10px] font-bold text-white transition-all ${calSelected ? "bg-[#FF0047] hover:bg-[#D10039] shadow-sm" : "bg-gray-300 cursor-not-allowed"}`}
           >
             Select & Add Date Column
           </button>

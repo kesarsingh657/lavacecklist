@@ -23,9 +23,51 @@ export const DEMO_ACCOUNTS = [
 ];
 
 export const FILL_TYPES   = ["Text Input","Number Input","Checkbox","OK / NG","Pass / Fail","Yes / No","Custom Dropdown"];
-export const DEPTS        = ["Production","Quality","Warehouse","Maintenance"];
+
+// 12 plant departments of the manufacturing execution system
+export const DEPTS = [
+  "SMT",
+  "Assembly",
+  "Testing",
+  "Packing",
+  "Quality Assurance",
+  "Incoming Quality",
+  "Store & Warehouse",
+  "Maintenance",
+  "Production Planning",
+  "Repair & Rework",
+  "Dispatch & Logistics",
+  "EHS & Facility",
+];
+
+// Shop-floor lines — a checklist is always filled against one line
+export const LINES = [
+  "Line 1","Line 2","Line 3","Line 4","Line 5","Line 6",
+  "Line 7","Line 8","SMT Line A","SMT Line B","Pilot Line","Rework Bench",
+];
+
 export const SHIFTS       = ["Morning","Afternoon","Night"];
-export const FREQS        = ["One Time","Daily","Weekly","Monthly"];
+export const FREQS        = ["One Time","Hourly","Daily","Weekly","Monthly"];
+
+// Hourly schedule — one checklist entry column per hour slot
+export const HOURLY_INTERVALS = [1, 2, 3, 4];
+export const SHIFT_HOURS = {
+  Morning:   { start: 6,  end: 14 },
+  Afternoon: { start: 14, end: 22 },
+  Night:     { start: 22, end: 6  },
+};
+
+/** Hour slot labels ("06:00", "07:00", …) for a shift at the given interval. */
+export function hourSlots(shift = "Morning", interval = 1) {
+  const { start, end } = SHIFT_HOURS[shift] || SHIFT_HOURS.Morning;
+  const span = (end - start + 24) % 24 || 24;
+  const step = Math.max(1, parseInt(interval, 10) || 1);
+  const slots = [];
+  for (let h = 0; h < span; h += step) {
+    slots.push(`${String((start + h) % 24).padStart(2, "0")}:00`);
+  }
+  return slots;
+}
 export const WEEK_DAYS    = ["Su","Mo","Tu","We","Th","Fr","Sa"];
 export const PAPER_SIZES  = ["A4","A3"];
 
