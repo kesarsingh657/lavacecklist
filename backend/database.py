@@ -15,7 +15,7 @@
 #
 # =============================================================================
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -64,7 +64,31 @@ def create_tables():
     # Import models here to register them with Base before creating tables
     import models  # noqa: F401 — this registers all model classes with Base
     Base.metadata.create_all(bind=engine)
+    add_missing_columns()
     print("📦 Tables created: users, checklists, audit_logs, templates, comments, attachments")
+
+# =============================================================================
+# ADD MISSING COLUMNS
+# create_all() never alters existing tables, so databases created by an older
+# version of the app are missing newer columns. This adds them in place.
+# =============================================================================
+NEW_COLUMNS = {
+    "checklists": {"line": "VARCHAR(50)", "hourly_interval": "INTEGER DEFAULT 1"},
+    "templates":  {"line": "VARCHAR(50)", "hourly_interval": "INTEGER DEFAULT 1"},
+}
+
+def add_missing_columns():
+    inspector = inspect(engine)
+    tables = inspector.get_table_names()
+    with engine.begin() as conn:
+        for table, columns in NEW_COLUMNS.items():
+            if table not in tables:
+                continue
+            existing = {c["name"] for c in inspector.get_columns(table)}
+            for name, ddl in columns.items():
+                if name not in existing:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
+                    print(f"🛠  Added column {table}.{name}")
 
 # =============================================================================
 # GET DB - DEPENDENCY INJECTION

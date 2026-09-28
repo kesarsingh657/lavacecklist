@@ -36,12 +36,23 @@ export function validateFillColumns(tableData) {
 // ── OVERDUE DETECTION (exported so DashboardPage & AnalyticsDashboard can use) ─
 // Returns true if a Daily checklist has no entries for today
 export function isOverdueToday(cl) {
-  if (cl.frequency !== "Daily" || !cl.horizontalStructure) return false;
-  const today = new Date().toISOString().split("T")[0];
-  if (!cl.horizontalStructure.dates?.includes(today)) return false;
+  if (!["Daily", "Hourly"].includes(cl.frequency) || !cl.horizontalStructure) return false;
+
+  // Hourly checklists are judged on the slot covering the current hour
+  const day = new Date().toISOString().split("T")[0];
+  let column = day;
+  if (cl.frequency === "Hourly") {
+    const dates   = cl.horizontalStructure.dates || [];
+    const nowStr  = `${day} ${String(new Date().getHours()).padStart(2, "0")}:00`;
+    const started = dates.filter(d => d.startsWith(day) && d <= nowStr);
+    if (!started.length) return false;
+    column = started[started.length - 1];
+  }
+
+  if (!cl.horizontalStructure.dates?.includes(column)) return false;
   const matrix = cl.horizontalStructure.matrixData || {};
   return !cl.horizontalStructure.rows?.some(row => {
-    const v = matrix[row.id]?.[today];
+    const v = matrix[row.id]?.[column];
     return v !== undefined && v !== "" && v !== false;
   });
 }
@@ -113,7 +124,7 @@ export function buildPrintHTML(cl, auditEntries=[], paperSize="A4") {
              : cl.status==="rejected" ? {bg:"#fee2e2",c:"#991b1b"}
              : {bg:"#f3f4f6",c:"#374151"};
 
-  const isRecurring = ["Daily","Weekly","Monthly"].includes(cl.frequency);
+  const isRecurring = ["Hourly","Daily","Weekly","Monthly"].includes(cl.frequency);
   let innerTableHTML = "";
 
   if (isRecurring) {
@@ -175,7 +186,7 @@ export function buildPrintHTML(cl, auditEntries=[], paperSize="A4") {
 <title>${cl.name||"Checklist"}</title>
 <style>
 @page{size:${isA3?"A3":"A4"} landscape;margin:8mm!important;}
-html,body{margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;color:#1A2E24;background:#fff;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+html,body{margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;color:#14141B;background:#fff;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
 .doc-wrapper{width:100%;padding:5px;box-sizing:border-box;}
 .dh{border-bottom:2px solid #e0e0e0;padding-bottom:6px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-end;}
 .dtitle{font-size:18px;font-weight:700;color:#161616;margin:0;}
@@ -195,7 +206,7 @@ table.cl-tbl td.rmk-cell{background:#fafafa!important;font-style:italic;color:#5
 <div class="doc-wrapper">
   <div class="dh">
     <div>
-      <div style="font-size:8px;text-transform:uppercase;color:#6B8A78;">Manufacturing System · Official Print</div>
+      <div style="font-size:8px;text-transform:uppercase;color:#7A7A8C;">Manufacturing System · Official Print</div>
       <div class="dtitle">${cl.name||"Unnamed"}</div>
     </div>
     <span class="badge">${(STATUS_LABEL[cl.status]||cl.status).replace(/[📝🔒📤⏳✅❌⊘🔄]/g,"").trim()}</span>
@@ -203,6 +214,7 @@ table.cl-tbl td.rmk-cell{background:#fafafa!important;font-style:italic;color:#5
   <div class="meta">
     <div class="mi"><label>ID</label><span>${cl.id}</span></div>
     <div class="mi"><label>Department</label><span>${cl.department||"—"}</span></div>
+    <div class="mi"><label>Line</label><span>${cl.line||"—"}</span></div>
     <div class="mi"><label>Shift</label><span>${cl.shift||"—"}</span></div>
     <div class="mi"><label>Schedule</label><span>${cl.frequency||"—"}</span></div>
     <div class="mi"><label>Created By</label><span>${cl.createdBy||"—"}</span></div>

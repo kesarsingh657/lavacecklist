@@ -2,16 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --lava-500: #FF0047;
+  --lava-600: #D10039;
+  --lava-400: #FF5C85;
+  --lava-100: #FFE0E8;
+  --lava-50:  #FFF1F4;
+  --ink:      #14141B;
+  --muted:    #7A7A8C;
+  --canvas:   #F5F6FA;
+  --line:     #E7E8F0;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
-body { font-family: 'DM Sans', sans-serif; background: #F0F7F3; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(900px 420px at 100% -10%, rgba(255,0,71,.07), transparent 60%),
+    radial-gradient(700px 380px at -10% 0%, rgba(255,0,71,.05), transparent 55%),
+    var(--canvas);
+  background-attachment: fixed;
+}
 
 /* Global Matrix UI Scrollbars styling rules */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #b6d6c8; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #3D8B6E; }
+::-webkit-scrollbar-thumb { background: var(--lava-100); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--lava-400); }
 
-[contenteditable]:focus { outline: 2px solid #3D8B6E; border-radius: 4px; background: #fff !important; }
+::selection { background: var(--lava-100); color: var(--lava-600); }
+
+[contenteditable]:focus { outline: 2px solid var(--lava-500); border-radius: 4px; background: #fff !important; }
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--lava-500) !important;
+  box-shadow: 0 0 0 3px rgba(255,0,71,.12);
+}
+
+@layer components {
+  .lava-card {
+    @apply bg-white rounded-2xl border border-[#E7E8F0] shadow-card transition-all duration-200;
+  }
+  .lava-card-hover {
+    @apply hover:-translate-y-0.5 hover:border-lava-200 hover:shadow-cardHover;
+  }
+  .btn-lava {
+    @apply inline-flex items-center gap-2 rounded-xl bg-lava-grad text-white font-semibold shadow-lava
+           transition-all duration-200 hover:brightness-110 active:scale-[.98] disabled:opacity-60;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 rounded-xl border border-[#E7E8F0] bg-white text-ink font-semibold
+           transition-all duration-200 hover:border-lava-300 hover:text-lava-600;
+  }
+  .field {
+    @apply w-full rounded-xl border border-[#E7E8F0] bg-white px-3 py-2.5 text-xs text-ink outline-none
+           transition-all duration-150 placeholder:text-[#A9AAB8];
+  }
+  .label-xs {
+    @apply block text-[10px] font-bold uppercase tracking-wide text-muted mb-1;
+  }
+}
 
 /* ── SOLID HIGH-CONTRAST SOLID SEPARATING BORDERS ── */
 table {

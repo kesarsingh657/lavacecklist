@@ -14,7 +14,7 @@ export default function FillField({ type, opts, value, onChange, disabled }) {
     case "Number Input": 
       return <input type="number" value={value||""} disabled={disabled} onChange={e=>onChange(e.target.value)} placeholder="0" className={cls}/>;
     case "Checkbox":     
-      return <div className="flex items-center justify-center"><input type="checkbox" checked={!!value} disabled={disabled} onChange={e=>onChange(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-[#3D8B6E]"/></div>;
+      return <div className="flex items-center justify-center"><input type="checkbox" checked={!!value} disabled={disabled} onChange={e=>onChange(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-[#FF0047]"/></div>;
     case "OK / NG": case "Pass / Fail": case "Yes / No": {
       const options = type === "OK / NG" ? ["OK","NG"] : type === "Pass / Fail" ? ["Pass","Fail"] : ["Yes","No"];
       return (

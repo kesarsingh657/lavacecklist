@@ -72,8 +72,10 @@ class ChecklistCreate(BaseModel):
     id:             str
     name:           str
     department:     Department
+    line:           Optional[str] = None
     shift:          Shift
     frequency:      Frequency = Frequency.one_time
+    hourly_interval: int = 1
     fill_type:      str = "Text Input"
     custom_options: List[str] = []
     rows:           int = 5
@@ -90,7 +92,9 @@ class ChecklistUpdate(BaseModel):
     """
     name:           Optional[str]         = None
     department:     Optional[Department]  = None
+    line:           Optional[str]         = None
     shift:          Optional[Shift]       = None
+    hourly_interval: Optional[int]        = None
     status:         Optional[ChecklistStatus] = None
     table_data:           Optional[Dict[str, Any]] = None
     horizontal_structure: Optional[Dict[str, Any]] = None
@@ -114,8 +118,10 @@ class ChecklistOut(BaseModel):
     id:             str
     name:           str
     department:     Department
+    line:           Optional[str] = None
     shift:          Shift
     frequency:      Frequency
+    hourly_interval: int = 1
     fill_type:      str
     custom_options: List[str] = []
     status:         ChecklistStatus
@@ -182,8 +188,10 @@ class TemplateCreate(BaseModel):
     name:        str
     description: Optional[str] = ""
     department:  Optional[Department] = None
+    line:        Optional[str] = None
     shift:       Optional[Shift]      = None
     frequency:   Frequency = Frequency.one_time
+    hourly_interval: int = 1
     fill_type:   str = "Text Input"
     custom_options: List[str] = []
     rows:        int = 5
@@ -198,8 +206,10 @@ class TemplateOut(BaseModel):
     name:        str
     description: Optional[str]
     department:  Optional[Department]
+    line:        Optional[str] = None
     shift:       Optional[Shift]
     frequency:   Frequency
+    hourly_interval: int = 1
     fill_type:   str
     custom_options: List[str] = []
     rows:        int

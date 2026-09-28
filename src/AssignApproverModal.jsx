@@ -17,10 +17,10 @@ export default function AssignApproverModal({ cl, onSave, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[150] p-4">
       <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
-        <div className="bg-[#3D8B6E] text-white px-5 py-3.5 flex items-center justify-between">
+        <div className="bg-[#FF0047] text-white px-5 py-3.5 flex items-center justify-between">
           <div>
             <h3 className="text-sm font-bold">👤 Assign Approver</h3>
-            <p className="text-[10px] text-green-200 mt-0.5 font-mono">{cl.name}</p>
+            <p className="text-[10px] text-white/70 mt-0.5 font-mono">{cl.name}</p>
           </div>
           <button onClick={onClose} className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-xs font-bold">✕</button>
         </div>
@@ -37,11 +37,11 @@ export default function AssignApproverModal({ cl, onSave, onClose }) {
           )}
 
           <div>
-            <label className="block text-[10px] font-bold text-[#6B8A78] uppercase mb-1.5">Approval Required</label>
+            <label className="block text-[10px] font-bold text-[#7A7A8C] uppercase mb-1.5">Approval Required</label>
             <div className="grid grid-cols-2 gap-2">
               {["yes","no"].map(v => (
                 <button key={v} type="button" onClick={() => { setApprovalRequired(v); setErr(""); }}
-                  className={`py-2 rounded-xl border-2 text-xs font-bold transition-all ${approvalRequired === v ? (v==="yes" ? "border-[#3D8B6E] bg-[#e8f5ee] text-[#3D8B6E]" : "border-red-400 bg-red-50 text-red-600") : "border-gray-200 text-gray-400 hover:border-gray-300"}`}>
+                  className={`py-2 rounded-xl border-2 text-xs font-bold transition-all ${approvalRequired === v ? (v==="yes" ? "border-[#FF0047] bg-[#fff1f4] text-[#FF0047]" : "border-red-400 bg-red-50 text-red-600") : "border-gray-200 text-gray-400 hover:border-gray-300"}`}>
                   {v === "yes" ? "✅ Yes" : "⊘ No"}
                 </button>
               ))}
@@ -50,16 +50,16 @@ export default function AssignApproverModal({ cl, onSave, onClose }) {
 
           {approvalRequired === "yes" && <>
             <div>
-              <label className="block text-[10px] font-bold text-[#6B8A78] uppercase mb-1.5">Approver Name <span className="text-red-500">*</span></label>
+              <label className="block text-[10px] font-bold text-[#7A7A8C] uppercase mb-1.5">Approver Name <span className="text-red-500">*</span></label>
               <input value={approverName} onChange={e => { setApproverName(e.target.value); setErr(""); }}
                 placeholder="e.g. Mr. Sharma / QC Manager"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#3D8B6E]"/>
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#FF0047]"/>
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-[#6B8A78] uppercase mb-1.5">Approver Email <span className="text-[#6B8A78] font-normal">(optional)</span></label>
+              <label className="block text-[10px] font-bold text-[#7A7A8C] uppercase mb-1.5">Approver Email <span className="text-[#7A7A8C] font-normal">(optional)</span></label>
               <input type="email" value={approverEmail} onChange={e => setApproverEmail(e.target.value)}
                 placeholder="approver@company.com"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#3D8B6E]"/>
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#FF0047]"/>
             </div>
           </>}
 
@@ -70,7 +70,7 @@ export default function AssignApproverModal({ cl, onSave, onClose }) {
 
           <div className="flex gap-2 pt-1">
             <button onClick={handleSave}
-              className="flex-1 py-2.5 bg-[#3D8B6E] hover:bg-[#2A6B52] text-white text-xs font-bold rounded-xl transition-all">
+              className="flex-1 py-2.5 bg-[#FF0047] hover:bg-[#D10039] text-white text-xs font-bold rounded-xl transition-all">
               💾 Save Approver
             </button>
             <button onClick={onClose}

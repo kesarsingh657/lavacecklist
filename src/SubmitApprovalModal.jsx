@@ -37,29 +37,29 @@ export default function SubmitApprovalModal({ cl, user, onConfirm, onClose }) {
 
         <div className="p-5 space-y-4">
           {/* Checklist summary */}
-          <div className="bg-[#f6faf8] rounded-xl p-3 text-xs border border-[#d0e8da] space-y-1.5">
-            <div><span className="text-[#6B8A78]">Checklist:</span> <span className="font-semibold">{cl.name}</span></div>
-            <div><span className="text-[#6B8A78]">ID:</span> <span className="font-mono text-[10px]">{cl.id}</span></div>
-            <div><span className="text-[#6B8A78]">Department:</span> <span className="font-semibold">{cl.department}</span></div>
-            <div><span className="text-[#6B8A78]">Schedule:</span> <span className="font-semibold">{cl.frequency || "One Time"}</span></div>
+          <div className="bg-[#fafafc] rounded-xl p-3 text-xs border border-[#e6e7ef] space-y-1.5">
+            <div><span className="text-[#7A7A8C]">Checklist:</span> <span className="font-semibold">{cl.name}</span></div>
+            <div><span className="text-[#7A7A8C]">ID:</span> <span className="font-mono text-[10px]">{cl.id}</span></div>
+            <div><span className="text-[#7A7A8C]">Department:</span> <span className="font-semibold">{cl.department}</span></div>
+            <div><span className="text-[#7A7A8C]">Schedule:</span> <span className="font-semibold">{cl.frequency || "One Time"}</span></div>
           </div>
 
           {/* DIGITAL SIGNATURE — read-only, auto-filled from logged-in user */}
           <div>
-            <label className="block text-[10px] font-bold text-[#6B8A78] uppercase mb-1.5">
+            <label className="block text-[10px] font-bold text-[#7A7A8C] uppercase mb-1.5">
               Submitted By (Digital Signature)
             </label>
-            <div className="w-full border border-[#3D8B6E]/40 bg-[#f0fdf4] rounded-xl px-3 py-2 text-xs font-semibold text-[#1A2E24] flex items-center gap-2">
-              <span className="text-[#3D8B6E]">🔒</span>
+            <div className="w-full border border-[#FF0047]/40 bg-[#f0fdf4] rounded-xl px-3 py-2 text-xs font-semibold text-[#14141B] flex items-center gap-2">
+              <span className="text-[#FF0047]">🔒</span>
               {approverName}
-              <span className="text-[9px] text-[#6B8A78] ml-auto font-normal">Locked to your account</span>
+              <span className="text-[9px] text-[#7A7A8C] ml-auto font-normal">Locked to your account</span>
             </div>
           </div>
 
           {/* Optional CC email */}
           <div>
-            <label className="block text-[10px] font-bold text-[#6B8A78] uppercase mb-1.5">
-              Notify Email <span className="text-[#6B8A78] font-normal">(optional)</span>
+            <label className="block text-[10px] font-bold text-[#7A7A8C] uppercase mb-1.5">
+              Notify Email <span className="text-[#7A7A8C] font-normal">(optional)</span>
             </label>
             <input
               type="email"
@@ -72,7 +72,7 @@ export default function SubmitApprovalModal({ cl, user, onConfirm, onClose }) {
 
           {/* Submission remarks */}
           <div>
-            <label className="block text-[10px] font-bold text-[#6B8A78] uppercase mb-1.5">
+            <label className="block text-[10px] font-bold text-[#7A7A8C] uppercase mb-1.5">
               Submission Remarks <span className="text-red-500">*</span>
             </label>
             <textarea

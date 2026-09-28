@@ -14,7 +14,7 @@ export default function AuditPage({ auditLog, checklists, user }) {
   return (
     <main className="max-w-7xl mx-auto px-4 py-5">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <h2 className="text-lg font-bold text-[#1A2E24]">Manufacturing Checklist Dashboard</h2>
+        <h2 className="text-lg font-bold text-[#14141B]">Manufacturing Checklist Dashboard</h2>
         <div className="flex gap-2 flex-wrap">
           <select value={actionFilter} onChange={e=>setActionFilter(e.target.value)} className="text-xs px-2 py-1.5 rounded-lg border border-gray-200 outline-none bg-white">
             <option value="">All Actions</option>{actions.map(a=><option key={a}>{a}</option>)}
@@ -28,17 +28,17 @@ export default function AuditPage({ auditLog, checklists, user }) {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
-              <thead><tr className="bg-[#f6faf8] text-[#6B8A78] border-y border-gray-100">
+              <thead><tr className="bg-[#fafafc] text-[#7A7A8C] border-y border-gray-100">
                 {["Timestamp","Action","User","Checklist","Details"].map(h=><th key={h} className="px-4 py-2.5 text-left font-semibold whitespace-nowrap">{h}</th>)}
               </tr></thead>
               <tbody>
                 {[...visible].reverse().map(a=>(
-                  <tr key={a.id} className="border-t border-gray-50 hover:bg-green-50/30">
-                    <td className="px-4 py-2 font-mono text-[10px] text-[#6B8A78] whitespace-nowrap">{fmtDT(a.timestamp)}</td>
+                  <tr key={a.id} className="border-t border-gray-50 hover:bg-lava-50/60">
+                    <td className="px-4 py-2 font-mono text-[10px] text-[#7A7A8C] whitespace-nowrap">{fmtDT(a.timestamp)}</td>
                     <td className="px-4 py-2"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${ACTION_CLR[a.action]||"bg-gray-50 text-gray-600"}`}>{a.action}</span></td>
-                    <td className="px-4 py-2 font-semibold text-[#1A2E24]">{a.userName}</td>
-                    <td className="px-4 py-2 text-[#6B8A78] max-w-[140px] truncate">{a.checklistName||a.checklistId}</td>
-                    <td className="px-4 py-2 text-[#6B8A78] max-w-[300px]">{a.details}</td>
+                    <td className="px-4 py-2 font-semibold text-[#14141B]">{a.userName}</td>
+                    <td className="px-4 py-2 text-[#7A7A8C] max-w-[140px] truncate">{a.checklistName||a.checklistId}</td>
+                    <td className="px-4 py-2 text-[#7A7A8C] max-w-[300px]">{a.details}</td>
                   </tr>
                 ))}
               </tbody>

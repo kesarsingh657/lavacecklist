@@ -23,12 +23,12 @@ import React, { useMemo } from "react";
 import { DEPTS, SHIFTS } from "./constants";
 
 // ── Simple horizontal bar ─────────────────────────────────────────────────────
-function Bar({ pct, color = "bg-[#3D8B6E]", label, value }) {
+function Bar({ pct, color = "bg-[#FF0047]", label, value }) {
   return (
     <div className="mb-2">
       <div className="flex items-center justify-between mb-0.5">
-        <span className="text-[11px] text-[#1A2E24] font-medium">{label}</span>
-        <span className="text-[10px] text-[#6B8A78] font-mono">{value}</span>
+        <span className="text-[11px] text-[#14141B] font-medium">{label}</span>
+        <span className="text-[10px] text-[#7A7A8C] font-mono">{value}</span>
       </div>
       <div className="w-full bg-gray-100 rounded-full h-2">
         <div className={`${color} h-2 rounded-full transition-all`} style={{ width: `${Math.max(pct, 2)}%` }} />
@@ -43,10 +43,10 @@ function StatCard({ label, value, sub, dot }) {
     <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
       <div className="flex items-center gap-1.5 mb-1">
         {dot && <span style={{ width:7, height:7, borderRadius:"50%", background:dot, display:"inline-block" }} />}
-        <span className="text-[10px] text-[#6B8A78] font-semibold uppercase tracking-wide">{label}</span>
+        <span className="text-[10px] text-[#7A7A8C] font-semibold uppercase tracking-wide">{label}</span>
       </div>
-      <div className="text-3xl font-bold font-mono text-[#1A2E24]">{value}</div>
-      {sub && <div className="text-[10px] text-[#6B8A78] mt-0.5">{sub}</div>}
+      <div className="text-3xl font-bold font-mono text-[#14141B]">{value}</div>
+      {sub && <div className="text-[10px] text-[#7A7A8C] mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -133,8 +133,8 @@ export default function AnalyticsDashboard({ checklists, user }) {
     <main className="max-w-7xl mx-auto px-4 py-5">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h2 className="text-base font-bold text-[#1A2E24]">📊 Analytics Dashboard</h2>
-          <p className="text-[10px] text-[#6B8A78] mt-0.5">MES performance overview · {total} checklists total</p>
+          <h2 className="text-base font-bold text-[#14141B]">📊 Analytics Dashboard</h2>
+          <p className="text-[10px] text-[#7A7A8C] mt-0.5">MES performance overview · {total} checklists total</p>
         </div>
       </div>
 
@@ -150,23 +150,23 @@ export default function AnalyticsDashboard({ checklists, user }) {
 
         {/* ── Department completion ── */}
         <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-          <h3 className="text-[11px] font-bold text-[#6B8A78] uppercase tracking-wider mb-3">Completion by Department</h3>
+          <h3 className="text-[11px] font-bold text-[#7A7A8C] uppercase tracking-wider mb-3">Completion by Department</h3>
           {deptStats.map(d => (
             <Bar key={d.dept} label={d.dept} value={`${d.approved}/${d.total} · ${d.pct}%`} pct={d.pct}
-              color={d.pct === 100 ? "bg-green-500" : d.pct > 50 ? "bg-[#3D8B6E]" : d.pct > 0 ? "bg-yellow-400" : "bg-gray-200"} />
+              color={d.pct === 100 ? "bg-green-500" : d.pct > 50 ? "bg-[#FF0047]" : d.pct > 0 ? "bg-yellow-400" : "bg-gray-200"} />
           ))}
         </div>
 
         {/* ── Shift completion ── */}
         <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-          <h3 className="text-[11px] font-bold text-[#6B8A78] uppercase tracking-wider mb-3">Completion by Shift</h3>
+          <h3 className="text-[11px] font-bold text-[#7A7A8C] uppercase tracking-wider mb-3">Completion by Shift</h3>
           {shiftStats.map(s => (
             <Bar key={s.shift} label={s.shift + " Shift"} value={`${s.approved}/${s.total} · ${s.pct}%`} pct={s.pct}
               color={s.pct === 100 ? "bg-green-500" : s.pct > 50 ? "bg-purple-500" : s.pct > 0 ? "bg-yellow-400" : "bg-gray-200"} />
           ))}
 
           {/* Status distribution */}
-          <h3 className="text-[11px] font-bold text-[#6B8A78] uppercase tracking-wider mt-4 mb-3">Status Distribution</h3>
+          <h3 className="text-[11px] font-bold text-[#7A7A8C] uppercase tracking-wider mt-4 mb-3">Status Distribution</h3>
           {[
             { key:"approved",  label:"Approved",  dot:"#22c55e" },
             { key:"rejected",  label:"Rejected",  dot:"#ef4444" },
@@ -177,8 +177,8 @@ export default function AnalyticsDashboard({ checklists, user }) {
           ].map(s => (
             <div key={s.key} className="flex items-center gap-2 mb-1.5">
               <span style={{width:7,height:7,borderRadius:"50%",background:s.dot,flexShrink:0,display:"inline-block"}}/>
-              <span className="text-[11px] text-[#1A2E24] flex-1">{s.label}</span>
-              <span className="text-[10px] font-mono text-[#6B8A78]">{statusDist[s.key]}</span>
+              <span className="text-[11px] text-[#14141B] flex-1">{s.label}</span>
+              <span className="text-[10px] font-mono text-[#7A7A8C]">{statusDist[s.key]}</span>
             </div>
           ))}
         </div>
@@ -187,14 +187,14 @@ export default function AnalyticsDashboard({ checklists, user }) {
 
       {/* ── Weekly activity trend ── */}
       <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-5">
-        <h3 className="text-[11px] font-bold text-[#6B8A78] uppercase tracking-wider mb-4">Last 7 Days Activity</h3>
+        <h3 className="text-[11px] font-bold text-[#7A7A8C] uppercase tracking-wider mb-4">Last 7 Days Activity</h3>
         <div className="flex items-end gap-2 h-28">
           {weeklyActivity.map((d, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
               {/* Created bar */}
               <div className="w-full flex flex-col items-center gap-0.5">
                 <div
-                  className="w-full bg-[#3D8B6E] rounded-t"
+                  className="w-full bg-[#FF0047] rounded-t"
                   style={{ height: `${Math.round(d.created / maxWeekly * 80)}px`, minHeight: d.created ? 4 : 0 }}
                   title={`Created: ${d.created}`}
                 />
@@ -209,23 +209,23 @@ export default function AnalyticsDashboard({ checklists, user }) {
           ))}
         </div>
         <div className="flex gap-4 mt-2">
-          <div className="flex items-center gap-1.5"><span className="w-3 h-2 bg-[#3D8B6E] rounded inline-block"/><span className="text-[9px] text-[#6B8A78]">Created</span></div>
-          <div className="flex items-center gap-1.5"><span className="w-3 h-2 bg-green-300 rounded inline-block"/><span className="text-[9px] text-[#6B8A78]">Approved</span></div>
+          <div className="flex items-center gap-1.5"><span className="w-3 h-2 bg-[#FF0047] rounded inline-block"/><span className="text-[9px] text-[#7A7A8C]">Created</span></div>
+          <div className="flex items-center gap-1.5"><span className="w-3 h-2 bg-green-300 rounded inline-block"/><span className="text-[9px] text-[#7A7A8C]">Approved</span></div>
         </div>
       </div>
 
       {/* ── Top operators ── */}
       {topOperators.length > 0 && (
         <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-          <h3 className="text-[11px] font-bold text-[#6B8A78] uppercase tracking-wider mb-3">Top Creators</h3>
+          <h3 className="text-[11px] font-bold text-[#7A7A8C] uppercase tracking-wider mb-3">Top Creators</h3>
           {topOperators.map((op, i) => (
             <div key={op.name} className="flex items-center gap-3 mb-2">
-              <span className="text-[10px] font-bold text-[#6B8A78] w-4">{i + 1}</span>
-              <span className="flex-1 text-[12px] font-semibold text-[#1A2E24]">{op.name}</span>
+              <span className="text-[10px] font-bold text-[#7A7A8C] w-4">{i + 1}</span>
+              <span className="flex-1 text-[12px] font-semibold text-[#14141B]">{op.name}</span>
               <div className="flex-1 bg-gray-100 rounded-full h-1.5 mx-2">
-                <div className="bg-[#3D8B6E] h-1.5 rounded-full" style={{ width: `${Math.round(op.count / topOperators[0].count * 100)}%` }} />
+                <div className="bg-[#FF0047] h-1.5 rounded-full" style={{ width: `${Math.round(op.count / topOperators[0].count * 100)}%` }} />
               </div>
-              <span className="text-[10px] font-mono text-[#6B8A78]">{op.count}</span>
+              <span className="text-[10px] font-mono text-[#7A7A8C]">{op.count}</span>
             </div>
           ))}
         </div>
